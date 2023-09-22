@@ -17,5 +17,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .authorizeRequests().antMatchers(HttpMethod.POST, "/api/1.0/login").authenticated()
                 .and()
                 .authorizeRequests().anyRequest().permitAll();
+        http
+                .headers().frameOptions().disable();
+
     }
 }

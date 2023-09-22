@@ -41,5 +41,10 @@ public class LoginControllerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
+    @Test
+    public void postLogin_withoutIncorrectCredentials_receiveUnautorized(){
+
+    }
+
 
 }
