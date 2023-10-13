@@ -98,7 +98,7 @@ public void cleanup(){
      * Test for verifying login functionality with valid credentials.
      * The goal of this test is to ensure that upon successful login, the correct user ID is returned.
      */
-    public void postLogin_withValidCredentials_receiveLoggedInUserId(){
+    public void postLogin_withValidCredentials_receiveLoggedInUsersId(){
         // Creating and persisting a valid user in the database
         User inDB = userService.save(TestUtil.createValidUser());
         // Authenticating the user (method might be elsewhere in the test class, simulates user login)
@@ -107,10 +107,50 @@ public void cleanup(){
         // Making a login request to the API
         Map<String, Object> body = login.getBody();
         // Extracting the response body
-        Integer id = (Integer) body.get("id");
+        Integer id = (Integer) body.get("userId");
         // Extracting the user ID from the response body
         assertThat(id).isEqualTo(inDB.getUserId());
         // Asserting that the returned user ID matches the ID of the persisted user
 
     }
+    @Test
+    public void postLogin_withValidCredentials_receiveLoggedInUsersImage(){
+        User inDb = userService.save(TestUtil.createValidUser());
+        authenticate();
+        ResponseEntity<Map<String, Object>> login = login(new ParameterizedTypeReference<Map<String, Object>>() {});
+        Map<String, Object> body = login.getBody();
+        String image = (String) body.get("image");
+
+        assertThat(image).isEqualTo(inDb.getImage());
+    }
+    @Test
+    public void postLogin_withValidCredentials_receiveLoggedInUsersDisplayName(){
+        User inDb = userService.save(TestUtil.createValidUser());
+        authenticate();
+        ResponseEntity<Map<String, Object>> login = login(new ParameterizedTypeReference<Map<String, Object>>() {});
+        Map<String, Object> body = login.getBody();
+        String displayName = (String) body.get("userDisplayName");
+
+        assertThat(displayName).isEqualTo(inDb.getUserDisplayName());
+    }
+    @Test
+    public void postLogin_withValidCredentials_receiveLoggedInUsersUsername(){
+        User inDb = userService.save(TestUtil.createValidUser());
+        authenticate();
+        ResponseEntity<Map<String, Object>> login = login(new ParameterizedTypeReference<Map<String, Object>>() {});
+        Map<String, Object> body = login.getBody();
+        String username = (String) body.get("username");
+
+        assertThat(username).isEqualTo(inDb.getUsername());
+    }
+    @Test
+    public void postLogin_withValidCredentials_notReceiveLoggedInUsersPassword(){
+        User inDb = userService.save(TestUtil.createValidUser());
+        authenticate();
+        ResponseEntity<Map<String, Object>> login = login(new ParameterizedTypeReference<Map<String, Object>>() {});
+        Map<String, Object> body = login.getBody();
+
+        assertThat(body.containsKey("password")).isFalse();
+    }
+
 }

@@ -16,8 +16,10 @@ import java.lang.annotation.Target;
  * It's intended to be used on the 'username' field (or similar) to guarantee its uniqueness across the application.
  */
 @Constraint(validatedBy = UniqueUsernameValidator.class)
-//указывает, что UniqueUsername является пользовательской аннотацией валидации, и она будет использовать
-// UniqueUsernameValidator для предоставления логики валидации.
+/*
+ * указывает, что UniqueUsername является пользовательской аннотацией валидации, и она будет использовать
+ * UniqueUsernameValidator для предоставления логики валидации.
+ */
 @Target(ElementType.FIELD)
 //указывает, что UniqueUsername может быть применена только к полям. дДля расширения возможности использования
 // этой аннотации (например, применять к методам), можно добавить дополнительные элементы типа в эту аннотацию.

@@ -18,12 +18,14 @@ public class UniqueUsernameValidator implements ConstraintValidator<UniqueUserna
     /**
      * Checks if the provided username value is unique.
      *
-     * @param username the username to be checked.
+     * This method queries the UserRepository to see if the username is already present.
+     * If the username is found, it returns false indicating a validation failure.
+     *
+     * @param s the username to be checked.
      * @param constraintValidatorContext context in which the constraint is evaluated.
      * @return true if the username is unique, false otherwise.
      *
-     * This method queries the UserRepository to see if the username is already present.
-     * If the username is found, it returns false indicating a validation failure.
+
      */
     @Override
     public boolean isValid(String s, ConstraintValidatorContext constraintValidatorContext) {
