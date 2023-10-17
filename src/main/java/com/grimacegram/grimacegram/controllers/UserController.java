@@ -51,23 +51,22 @@ public class UserController {
      * error response, detailing the specific validation errors that occurred.
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    /*
-     * Указывает, что метод должен быть вызван,
-     * когда исключение MethodArgumentNotValidException возникает в контроллере. Такое исключение обычно генерируется,
-     * когда аргументы, переданные методу контроллера, не прошли проверку валидности.
-     */
+//     Indicates that the method should be invoked
+//     when a MethodArgumentNotValidException arises within the controller. Such an exception is typically generated
+//     when arguments passed to a controller method fail validation checks.
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    /*
-     * Устанавливает HTTP-статус ответа, который будет возвращен клиенту, если этот обработчик исключений вызывается.
-     * В данном случае, статус будет 400 Bad Request, что подразумевает, что клиент отправил запрос,
-     * который сервер не может или не хочет обрабатывать из-за неверных данных.
-     */
+
+//     Sets the HTTP status of the response to be returned to the client if this exception handler gets invoked.
+//     In this case, the status will be 400 Bad Request, implying that the client sent a request
+//     which the server cannot or will not process due to erroneous data.
+
+
     ApiError handleValidationException(MethodArgumentNotValidException exception, HttpServletRequest request){
-        /*
-            Внутри метода, мы сначала создаем объект ApiError с некоторым базовым описанием ошибки.
-            Затем мы проходим через все ошибки валидации, вытягивая из BindingResult, и добавляем их в наш объект ошибки.
-            Это обеспечивает структурированный ответ об ошибке, который можно легко интерпретировать на стороне клиента.
-        */
+
+//            Inside the method, we initially craft an ApiError object with a general error description.
+//            We then iterate through all the validation errors, extracted from BindingResult, and append them to our error object.
+//            This ensures a structured error response that can be easily interpreted on the client's end.
+
         ApiError apiError = new ApiError(400, "Validation error", request.getServletPath());
         BindingResult result = exception.getBindingResult();
         Map<String, String> validationErrors = new HashMap<>();

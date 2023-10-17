@@ -2,6 +2,7 @@ package com.grimacegram.grimacegram.services;
 
 import com.grimacegram.grimacegram.model.User;
 import com.grimacegram.grimacegram.repository.UserRepository;
+import com.grimacegram.grimacegram.shared.UsersProjection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -28,8 +29,20 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public Page<?> getUsers() {
+    /**
+     * Retrieves a paginated list of user projections.
+     *
+     * User projections (specified in UsersProjection interface) include selected user details and
+     * allow for more efficient data retrieval and transmission. The method uses a predefined method
+     * in UserRepository, which utilizes a native SQL query to fetch the data.
+     *
+     * Note: The method as it is will always retrieve the first page of users due to static
+     * PageRequest. Consider parameterizing the page number and size for more dynamic pagination.
+     *
+     * @return a Page of user projections with specified details for each user.
+     */
+    public Page<UsersProjection> getUsers() {
         Pageable pageable = PageRequest.of(0, 10);
-        return userRepository.findAll(pageable);
+        return userRepository.getAllUsersProjection(pageable);
     }
 }

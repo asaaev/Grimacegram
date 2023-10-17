@@ -29,7 +29,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("testing")
-//@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class UserControllerTest {
 
     public static final String API_1_0_USERS = "/api/1.0/users";
@@ -51,8 +50,6 @@ public class UserControllerTest {
     public <T> ResponseEntity<T> getUsers(ParameterizedTypeReference<T> responseType){
         return testRestTemplate.exchange(API_1_0_USERS, HttpMethod.GET, null, responseType);
     }
-
-//    ResponseEntity<Object> response = testRestTemplate.postForEntity(API_1_0_USERS, createValidUser(), Object.class);
 
     @Test
     public void postUser_whenUserIsValid_receiveOk(){
