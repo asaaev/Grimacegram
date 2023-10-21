@@ -7,6 +7,7 @@ import com.grimacegram.grimacegram.shared.GenericResponse;
 import com.grimacegram.grimacegram.vm.UserVM;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -30,10 +31,23 @@ public class UserController {
         userService.save(user);
         return new GenericResponse("User");
     }
+    /**
+     * Retrieves a paginated list of users.
+     *
+     * <p>
+     * The method utilizes Spring's Pageable support to handle pagination parameters.
+     * This reduces manual intervention in managing pagination parameters and provides
+     * a more standardized way of dealing with pagination.
+     * </p>
+     *
+     * @param page The pagination information provided by the client or default values.
+     * @return A paginated list of UserVM objects.
+     */
     @GetMapping("/users")
-    Page<UserVM> getUsers(){
-        return userService.getUsers().map(UserVM::new);
+    Page<UserVM> getUsers(Pageable page){
+        return userService.getUsers(page).map(UserVM::new);
     }
+
 
     /**
      * Handles validation exceptions thrown when request payload validation rules are violated.

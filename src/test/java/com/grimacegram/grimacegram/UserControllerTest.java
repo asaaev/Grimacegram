@@ -50,6 +50,9 @@ public class UserControllerTest {
     public <T> ResponseEntity<T> getUsers(ParameterizedTypeReference<T> responseType){
         return testRestTemplate.exchange(API_1_0_USERS, HttpMethod.GET, null, responseType);
     }
+    public <T> ResponseEntity<T> getUsers(String path, ParameterizedTypeReference<T> responseType){
+        return testRestTemplate.exchange(path, HttpMethod.GET, null, responseType);
+    }
 
     @Test
     public void postUser_whenUserIsValid_receiveOk(){
@@ -265,6 +268,43 @@ public class UserControllerTest {
         ResponseEntity<TestPage<Map<String, Object>>> response = getUsers(new ParameterizedTypeReference<TestPage<Map<String, Object>>>() {});
         Map<String, Object> entity = response.getBody().getContent().get(0);
         assertThat(entity.containsKey("password")).isFalse();
+    }
+    @Test
+    public void getUsers_whenPageIsRequestedFor3ItemsPerPageWhereTheDatabaseHas20Users_receive3Users(){
+        IntStream.rangeClosed(1, 20).mapToObj(i -> "test-user-" + i)
+                .map(TestUtil::createValidUser)
+                .forEach(user -> userRepository.save(user));
+        String path = API_1_0_USERS + "?page=0&size=3";
+        ResponseEntity<TestPage<Object>> response = getUsers(path, new ParameterizedTypeReference<TestPage<Object>>() {
+        });
+        assertThat(response.getBody().getContent().size()).isEqualTo(3);
+    }
+    @Test
+    public void getUsers_whenPageSizeNotProvided_receivePageSizeAs10(){
+        ResponseEntity<TestPage<Object>> response = getUsers(new ParameterizedTypeReference<TestPage<Object>>() {
+        });
+        assertThat(response.getBody().getSize()).isEqualTo(10);
+    }
+    @Test
+    public void getUsers_whenPageSizeIsGreaterThan100_receivePageSizeAs100(){
+        String path = API_1_0_USERS + "?size=500";
+        ResponseEntity<TestPage<Object>> response = getUsers(path, new ParameterizedTypeReference<TestPage<Object>>() {
+        });
+        assertThat(response.getBody().getSize()).isEqualTo(100);
+    }
+    @Test
+    public void getUsers_whenPageSizeIsNegative_receivePageSizeAs10(){
+        String path = API_1_0_USERS + "?size=-5";
+        ResponseEntity<TestPage<Object>> response = getUsers(path, new ParameterizedTypeReference<TestPage<Object>>() {
+        });
+        assertThat(response.getBody().getSize()).isEqualTo(10);
+    }
+    @Test
+    public void getUsers_whenPageIsNegative_receiveFirstPage(){
+        String path = API_1_0_USERS + "?page=-5";
+        ResponseEntity<TestPage<Object>> response = getUsers(path, new ParameterizedTypeReference<TestPage<Object>>() {
+        });
+        assertThat(response.getBody().getNumber()).isEqualTo(0);
     }
 
 }
