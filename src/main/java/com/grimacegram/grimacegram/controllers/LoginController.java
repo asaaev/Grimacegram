@@ -1,23 +1,10 @@
 package com.grimacegram.grimacegram.controllers;
 
-import com.fasterxml.jackson.annotation.JsonView;
-import com.grimacegram.grimacegram.error.ApiError;
 import com.grimacegram.grimacegram.model.User;
 import com.grimacegram.grimacegram.shared.CurrentUser;
-import com.grimacegram.grimacegram.shared.GenericResponse;
-import com.grimacegram.grimacegram.shared.Views;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.ExceptionHandler;
+import com.grimacegram.grimacegram.vm.UserVM;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.nio.file.AccessDeniedException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 @RestController
 public class LoginController {
@@ -33,10 +20,9 @@ public class LoginController {
      * @return The logged-in User object, which will be converted to JSON using the specified view.
      */
     @PostMapping("/api/1.0/login")
-    @JsonView(Views.Base.class)
-    User handleLogin(@CurrentUser User loggedInUser){
+    UserVM handleLogin(@CurrentUser User loggedInUser){
 
-        return loggedInUser;
+        return new UserVM(loggedInUser);
     }
 
 }

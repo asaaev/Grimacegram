@@ -1,16 +1,13 @@
 package com.grimacegram.grimacegram.controllers;
 
-import com.fasterxml.jackson.annotation.JsonView;
 import com.grimacegram.grimacegram.error.ApiError;
 import com.grimacegram.grimacegram.model.User;
-import com.grimacegram.grimacegram.repository.UserRepository;
 import com.grimacegram.grimacegram.services.UserService;
 import com.grimacegram.grimacegram.shared.GenericResponse;
-import com.grimacegram.grimacegram.shared.Views;
+import com.grimacegram.grimacegram.vm.UserVM;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -34,9 +31,8 @@ public class UserController {
         return new GenericResponse("User");
     }
     @GetMapping("/users")
-    @JsonView(Views.Base.class)
-    Page<?> getUsers(){
-        return userService.getUsers();
+    Page<UserVM> getUsers(){
+        return userService.getUsers().map(UserVM::new);
     }
 
     /**
