@@ -2,12 +2,10 @@ package com.grimacegram.grimacegram.services;
 
 import com.grimacegram.grimacegram.model.User;
 import com.grimacegram.grimacegram.repository.UserRepository;
-import com.grimacegram.grimacegram.shared.UsersProjection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -30,19 +28,16 @@ public class UserService {
     }
 
     /**
-     * Retrieves a paginated list of user projections.
+     * Fetches a list of Users based on the provided Pageable object and the current logged-in user.
      *
-     * User projections (specified in UsersProjection interface) include selected user details and
-     * allow for more efficient data retrieval and transmission. The method uses a predefined method
-     * in UserRepository, which utilizes a native SQL query to fetch the data.
-     *
-     * Note: The method as it is will always retrieve the first page of users due to static
-     * PageRequest. Consider parameterizing the page number and size for more dynamic pagination.
-     *
-     * @return a Page of user projections with specified details for each user.
+     * @param loggedInUser The User object of the currently logged-in user. If null, the function fetches all users.
+     * @param pageable The Pageable object containing the pagination information.
+     * @return A Page object containing the list of Users. The logged-in user is excluded if they are not null.
      */
-    public Page<UsersProjection> getUsers() {
-        Pageable pageable = PageRequest.of(0, 10);
-        return userRepository.getAllUsersProjection(pageable);
+    public Page<User> getUsers(User loggedInUser, Pageable pageable) {
+        if(loggedInUser != null){
+            return userRepository.findByUsernameNot(loggedInUser.getUsername(), pageable);
+        }
+        return userRepository.findAll(pageable);
     }
 }
