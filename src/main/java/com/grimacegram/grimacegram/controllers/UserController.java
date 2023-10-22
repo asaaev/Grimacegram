@@ -3,6 +3,7 @@ package com.grimacegram.grimacegram.controllers;
 import com.grimacegram.grimacegram.error.ApiError;
 import com.grimacegram.grimacegram.model.User;
 import com.grimacegram.grimacegram.services.UserService;
+import com.grimacegram.grimacegram.shared.CurrentUser;
 import com.grimacegram.grimacegram.shared.GenericResponse;
 import com.grimacegram.grimacegram.vm.UserVM;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,20 +33,16 @@ public class UserController {
         return new GenericResponse("User");
     }
     /**
-     * Retrieves a paginated list of users.
+     * Endpoint to fetch a list of users with pagination support.
+     * Excludes the currently logged-in user from the list.
      *
-     * <p>
-     * The method utilizes Spring's Pageable support to handle pagination parameters.
-     * This reduces manual intervention in managing pagination parameters and provides
-     * a more standardized way of dealing with pagination.
-     * </p>
-     *
-     * @param page The pagination information provided by the client or default values.
-     * @return A paginated list of UserVM objects.
+     * @param loggedInUser The User object of the currently logged-in user, injected by @CurrentUser.
+     * @param page The Pageable object containing the pagination information.
+     * @return A Page object wrapped around a list of UserVM (View Model) objects.
      */
     @GetMapping("/users")
-    Page<UserVM> getUsers(Pageable page){
-        return userService.getUsers(page).map(UserVM::new);
+    Page<UserVM> getUsers(@CurrentUser User loggedInUser, Pageable page){
+        return userService.getUsers(loggedInUser, page).map(UserVM::new);
     }
 
 

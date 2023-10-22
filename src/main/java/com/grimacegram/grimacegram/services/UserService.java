@@ -28,18 +28,16 @@ public class UserService {
     }
 
     /**
-     * Retrieves a paginated list of user projections.
+     * Fetches a list of Users based on the provided Pageable object and the current logged-in user.
      *
-     * User projections (specified in UsersProjection interface) include selected user details and
-     * allow for more efficient data retrieval and transmission. The method uses a predefined method
-     * in UserRepository, which utilizes a native SQL query to fetch the data.
-     *
-     * Note: The method as it is will always retrieve the first page of users due to static
-     * PageRequest. Consider parameterizing the page number and size for more dynamic pagination.
-     *
-     * @return a Page of user projections with specified details for each user.
+     * @param loggedInUser The User object of the currently logged-in user. If null, the function fetches all users.
+     * @param pageable The Pageable object containing the pagination information.
+     * @return A Page object containing the list of Users. The logged-in user is excluded if they are not null.
      */
-    public Page<User> getUsers(Pageable pageable) {
+    public Page<User> getUsers(User loggedInUser, Pageable pageable) {
+        if(loggedInUser != null){
+            return userRepository.findByUsernameNot(loggedInUser.getUsername(), pageable);
+        }
         return userRepository.findAll(pageable);
     }
 }
