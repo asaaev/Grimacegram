@@ -65,6 +65,10 @@ public class UserControllerTest {
     public <T> ResponseEntity<T> getUsers(String path, ParameterizedTypeReference<T> responseType){
         return testRestTemplate.exchange(path, HttpMethod.GET, null, responseType);
     }
+    public <T> ResponseEntity<T> getUser(String username, Class<T> responseType){
+        String path = API_1_0_USERS + "/" + username;
+        return testRestTemplate.getForEntity(path, responseType);
+    }
     private void authenticate(String username){
         testRestTemplate.getRestTemplate().getInterceptors()
                 .add(new BasicAuthenticationInterceptor(username, "P4ssword"));
@@ -330,6 +334,30 @@ public class UserControllerTest {
         authenticate("user1");
         ResponseEntity<TestPage<Object>> response = getUsers(new ParameterizedTypeReference<TestPage<Object>>() {});
         assertThat(response.getBody().getTotalElements()).isEqualTo(2);
+    }
+    @Test
+    public void getUserByUsername_WhenUserExist_receiveOk(){
+        String username = "test-user";
+        userService.save(TestUtil.createValidUser(username));
+        ResponseEntity<Object> response = getUser(username, Object.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+    @Test
+    public void getUserByUsername_WhenUserExist_receiveUserWithoutPassword(){
+        String username = "test-user";
+        userService.save(TestUtil.createValidUser(username));
+        ResponseEntity<String> response = getUser(username, String.class);
+        assertThat(response.getBody().contains("password")).isFalse();
+    }
+    @Test
+    public void getUserByUsername_WhenUserDoesNotExist_receiveNotFound(){
+        ResponseEntity<Object> response = getUser("unknown-user", Object.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+    @Test
+    public void getUserByUsername_WhenUserDoesNotExist_receiveApiError(){
+        ResponseEntity<ApiError> response = getUser("unknown-user", ApiError.class);
+        assertThat(response.getBody().getMessage().contains("unknown-use")).isTrue();
     }
 
 }
