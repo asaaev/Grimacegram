@@ -3,6 +3,7 @@ package com.grimacegram.grimacegram.services;
 import com.grimacegram.grimacegram.error.NotFoundException;
 import com.grimacegram.grimacegram.model.User;
 import com.grimacegram.grimacegram.repository.UserRepository;
+import com.grimacegram.grimacegram.vm.UserUpdateVM;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -48,5 +49,11 @@ public class UserService {
             throw new NotFoundException(username + "not found");
         }
         return inDB;
+    }
+
+    public User update(long id, UserUpdateVM userUpdate) {
+        User inDB = userRepository.getOne(id);
+        inDB.setUserDisplayName(userUpdate.getDisplayName());
+        return userRepository.save(inDB);
     }
 }

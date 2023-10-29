@@ -5,6 +5,7 @@ import com.grimacegram.grimacegram.model.User;
 import com.grimacegram.grimacegram.services.UserService;
 import com.grimacegram.grimacegram.shared.CurrentUser;
 import com.grimacegram.grimacegram.shared.GenericResponse;
+import com.grimacegram.grimacegram.vm.UserUpdateVM;
 import com.grimacegram.grimacegram.vm.UserVM;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -52,7 +53,9 @@ public class UserController {
     }
     @PutMapping("/users/{id:[0-9]+}")
     @PreAuthorize("#id == principal.userId")
-    void updateUser(@PathVariable long id){
+    UserVM updateUser(@PathVariable long id, @RequestBody(required = false) UserUpdateVM userUpdate){
+        User updated = userService.update(id, userUpdate);
+        return new UserVM(updated);
 
     }
 

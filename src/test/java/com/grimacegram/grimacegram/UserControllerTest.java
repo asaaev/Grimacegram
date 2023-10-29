@@ -5,6 +5,8 @@ import com.grimacegram.grimacegram.model.User;
 import com.grimacegram.grimacegram.repository.UserRepository;
 import com.grimacegram.grimacegram.services.UserService;
 import com.grimacegram.grimacegram.shared.GenericResponse;
+import com.grimacegram.grimacegram.vm.UserUpdateVM;
+import com.grimacegram.grimacegram.vm.UserVM;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -392,5 +394,45 @@ public class UserControllerTest {
         ResponseEntity<ApiError> response = putUser(anotherUserId, null, ApiError.class);
         assertThat(response.getBody().getUrl()).contains("users/" + anotherUserId);
     }
+    @Test
+    public void putUser_whenValidRequestBodyFromAuthorizedUser_receiveOk(){
+        User user = userService.save(TestUtil.createValidUser("user1"));
+        authenticate(user.getUsername());
+        UserUpdateVM updatedUser = createValidUserUpdateVM();
 
+        HttpEntity<UserUpdateVM> requestEntity = new HttpEntity<>(updatedUser);
+        ResponseEntity<Object> response = putUser(user.getUserId(), requestEntity, Object.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+    @Test
+    public void putUser_whenValidRequestBodyFromAuthorizedUser_displayNameUpdated(){
+        User user = userService.save(TestUtil.createValidUser("user1"));
+        authenticate(user.getUsername());
+        UserUpdateVM updatedUser = createValidUserUpdateVM();
+
+        HttpEntity<UserUpdateVM> requestEntity = new HttpEntity<>(updatedUser);
+        putUser(user.getUserId(), requestEntity, Object.class);
+
+        User userInDB = userRepository.findByUsername("user1");
+        assertThat(userInDB.getUserDisplayName()).isEqualTo(updatedUser.getDisplayName());
+
+    }
+    @Test
+    public void putUser_whenValidRequestBodyFromAuthorizedUser_receiveUserVMWithUpdatedDisplayName(){
+        User user = userService.save(TestUtil.createValidUser("user1"));
+        authenticate(user.getUsername());
+        UserUpdateVM updatedUser = createValidUserUpdateVM();
+
+        HttpEntity<UserUpdateVM> requestEntity = new HttpEntity<>(updatedUser);
+        ResponseEntity<UserVM> response = putUser(user.getUserId(), requestEntity, UserVM.class);
+
+        assertThat(response.getBody().getUserDisplayName()).isEqualTo(updatedUser.getDisplayName());
+
+    }
+
+    private UserUpdateVM createValidUserUpdateVM() {
+        UserUpdateVM updatedUser = new UserUpdateVM();
+        updatedUser.setDisplayName("newDisplayName");
+        return updatedUser;
+    }
 }
