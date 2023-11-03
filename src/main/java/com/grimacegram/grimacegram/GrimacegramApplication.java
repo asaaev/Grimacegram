@@ -21,7 +21,7 @@ public class GrimacegramApplication {
 	}
 
 	@Bean
-	@Profile(("!test"))
+	@Profile("dev")
 	CommandLineRunner run(UserService userService){
 		return new CommandLineRunner() {
 			@Override
