@@ -40,7 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test")
+@ActiveProfiles("testing")
 public class UserControllerTest {
 
     public static final String API_1_0_USERS = "/api/1.0/users";
