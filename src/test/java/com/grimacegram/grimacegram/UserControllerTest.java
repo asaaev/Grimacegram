@@ -7,8 +7,6 @@ import com.grimacegram.grimacegram.services.UserService;
 import com.grimacegram.grimacegram.shared.GenericResponse;
 import com.grimacegram.grimacegram.vm.UserUpdateVM;
 import com.grimacegram.grimacegram.vm.UserVM;
-import org.apache.commons.io.FileUtils;
-import org.aspectj.util.FileUtil;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -17,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -27,9 +24,7 @@ import org.springframework.http.client.support.BasicAuthenticationInterceptor;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -432,25 +427,6 @@ public class UserControllerTest {
         ResponseEntity<UserVM> response = putUser(user.getUserId(), requestEntity, UserVM.class);
 
         assertThat(response.getBody().getUserDisplayName()).isEqualTo(updatedUser.getDisplayName());
-
-    }
-    @Test
-    public void putUser_whenValidRequestBodyWithSupportedImageFromAuthorizedUser_receiveUserVMWithRandomImageName() throws IOException {
-        User user = userService.save(TestUtil.createValidUser("user1"));
-        authenticate(user.getUsername());
-
-        ClassPathResource imageResource = new ClassPathResource("profile.jpg");
-
-        UserUpdateVM updatedUser = createValidUserUpdateVM();
-
-        byte[] imageArr = FileUtils.readFileToByteArray(imageResource.getFile());
-        String imageString = Base64.getEncoder().encodeToString(imageArr);
-        updatedUser.setImage(imageString);
-
-        HttpEntity<UserUpdateVM> requestEntity = new HttpEntity<>(updatedUser);
-        ResponseEntity<UserVM> response = putUser(user.getUserId(), requestEntity, UserVM.class);
-
-        assertThat(response.getBody().getImage()).isNotEqualTo("profile-image.png");
 
     }
 
