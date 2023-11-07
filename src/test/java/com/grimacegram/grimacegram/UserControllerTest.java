@@ -5,6 +5,8 @@ import com.grimacegram.grimacegram.model.User;
 import com.grimacegram.grimacegram.repository.UserRepository;
 import com.grimacegram.grimacegram.services.UserService;
 import com.grimacegram.grimacegram.shared.GenericResponse;
+import com.grimacegram.grimacegram.vm.UserUpdateVM;
+import com.grimacegram.grimacegram.vm.UserVM;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -14,6 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -64,6 +67,14 @@ public class UserControllerTest {
     }
     public <T> ResponseEntity<T> getUsers(String path, ParameterizedTypeReference<T> responseType){
         return testRestTemplate.exchange(path, HttpMethod.GET, null, responseType);
+    }
+    public <T> ResponseEntity<T> getUser(String username, Class<T> responseType){
+        String path = API_1_0_USERS + "/" + username;
+        return testRestTemplate.getForEntity(path, responseType);
+    }
+    public <T> ResponseEntity<T> putUser(long id, HttpEntity<?> requestEntity, Class<T> responseType){
+        String path = API_1_0_USERS + "/" + id;
+        return testRestTemplate.exchange(path, HttpMethod.PUT, requestEntity, responseType);
     }
     private void authenticate(String username){
         testRestTemplate.getRestTemplate().getInterceptors()
@@ -331,5 +342,97 @@ public class UserControllerTest {
         ResponseEntity<TestPage<Object>> response = getUsers(new ParameterizedTypeReference<TestPage<Object>>() {});
         assertThat(response.getBody().getTotalElements()).isEqualTo(2);
     }
+    @Test
+    public void getUserByUsername_WhenUserExist_receiveOk(){
+        String username = "test-user";
+        userService.save(TestUtil.createValidUser(username));
+        ResponseEntity<Object> response = getUser(username, Object.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+    @Test
+    public void getUserByUsername_WhenUserExist_receiveUserWithoutPassword(){
+        String username = "test-user";
+        userService.save(TestUtil.createValidUser(username));
+        ResponseEntity<String> response = getUser(username, String.class);
+        assertThat(response.getBody().contains("password")).isFalse();
+    }
+    @Test
+    public void getUserByUsername_WhenUserDoesNotExist_receiveNotFound(){
+        ResponseEntity<Object> response = getUser("unknown-user", Object.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+    @Test
+    public void getUserByUsername_WhenUserDoesNotExist_receiveApiError(){
+        ResponseEntity<ApiError> response = getUser("unknown-user", ApiError.class);
+        assertThat(response.getBody().getMessage().contains("unknown-use")).isTrue();
+    }
+    @Test
+    public void putUser_whenUnauthorizedUserSendTheRequest_receiveUnauthorized(){
+        ResponseEntity<Object> response = putUser(123, null, Object.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+    @Test
+    public void putUser_whenAuthorizedUserSendsUpdateForAnotherUser_receiveForbidden(){
+        User user = userService.save(TestUtil.createValidUser("user1"));
+        authenticate(user.getUsername());
 
+        long anotherUserId = user.getUserId() + 123;
+        ResponseEntity<Object> response = putUser(anotherUserId, null, Object.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+    @Test
+    public void putUser_whenUnauthorizedUserSendTheRequest_receiveApiError(){
+        ResponseEntity<ApiError> response = putUser(123, null, ApiError.class);
+        assertThat(response.getBody().getUrl()).contains("users/123");
+    }
+    @Test
+    public void putUser_whenAuthorizedUserSendsUpdateForAnotherUser_receiveApiError(){
+        User user = userService.save(TestUtil.createValidUser("user1"));
+        authenticate(user.getUsername());
+
+        long anotherUserId = user.getUserId() + 123;
+        ResponseEntity<ApiError> response = putUser(anotherUserId, null, ApiError.class);
+        assertThat(response.getBody().getUrl()).contains("users/" + anotherUserId);
+    }
+    @Test
+    public void putUser_whenValidRequestBodyFromAuthorizedUser_receiveOk(){
+        User user = userService.save(TestUtil.createValidUser("user1"));
+        authenticate(user.getUsername());
+        UserUpdateVM updatedUser = createValidUserUpdateVM();
+
+        HttpEntity<UserUpdateVM> requestEntity = new HttpEntity<>(updatedUser);
+        ResponseEntity<Object> response = putUser(user.getUserId(), requestEntity, Object.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+    @Test
+    public void putUser_whenValidRequestBodyFromAuthorizedUser_displayNameUpdated(){
+        User user = userService.save(TestUtil.createValidUser("user1"));
+        authenticate(user.getUsername());
+        UserUpdateVM updatedUser = createValidUserUpdateVM();
+
+        HttpEntity<UserUpdateVM> requestEntity = new HttpEntity<>(updatedUser);
+        putUser(user.getUserId(), requestEntity, Object.class);
+
+        User userInDB = userRepository.findByUsername("user1");
+        assertThat(userInDB.getUserDisplayName()).isEqualTo(updatedUser.getDisplayName());
+
+    }
+    @Test
+    public void putUser_whenValidRequestBodyFromAuthorizedUser_receiveUserVMWithUpdatedDisplayName(){
+        User user = userService.save(TestUtil.createValidUser("user1"));
+        authenticate(user.getUsername());
+        UserUpdateVM updatedUser = createValidUserUpdateVM();
+
+        HttpEntity<UserUpdateVM> requestEntity = new HttpEntity<>(updatedUser);
+        ResponseEntity<UserVM> response = putUser(user.getUserId(), requestEntity, UserVM.class);
+
+        assertThat(response.getBody().getUserDisplayName()).isEqualTo(updatedUser.getDisplayName());
+
+    }
+
+    private UserUpdateVM createValidUserUpdateVM() {
+        UserUpdateVM updatedUser = new UserUpdateVM();
+        updatedUser.setDisplayName("newDisplayName");
+        return updatedUser;
+    }
 }
