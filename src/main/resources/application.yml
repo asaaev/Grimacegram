@@ -16,5 +16,3 @@ spring:
       pageable:
         default-page-size: 10
         max-page-size: 100
-grimace:
-  upload-path: uploads-test
