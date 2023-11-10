@@ -1,6 +1,7 @@
 package com.grimacegram.grimacegram.services;
 
 import com.grimacegram.grimacegram.error.NotFoundException;
+import com.grimacegram.grimacegram.file.FileService;
 import com.grimacegram.grimacegram.model.User;
 import com.grimacegram.grimacegram.repository.UserRepository;
 import com.grimacegram.grimacegram.vm.UserUpdateVM;
@@ -11,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.UUID;
 
 @Service
@@ -20,10 +22,13 @@ public class UserService {
 
     PasswordEncoder passwordEncoder;
 
+    FileService fileService;
+
     @Autowired
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, FileService fileService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.fileService = fileService;
     }
 
     public User save(User user){
@@ -56,8 +61,15 @@ public class UserService {
     public User update(long id, UserUpdateVM userUpdate) {
         User inDB = userRepository.getOne(id);
         inDB.setUserDisplayName(userUpdate.getDisplayName());
-        String saveImageName = inDB.getUsername() + UUID.randomUUID().toString().replaceAll("-", "");
-        inDB.setImage(saveImageName);
+        if(userUpdate.getImage() != null){
+            String saveImageName = null;
+            try {
+                saveImageName = fileService.saveProfileImage(userUpdate.getImage());
+                inDB.setImage(saveImageName);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
         return userRepository.save(inDB);
     }
 }
