@@ -555,6 +555,24 @@ public class UserControllerTest {
 
         assertThat(validationErrors.get("image")).isEqualTo("Only PNG and JPG files are allowed");
     }
+    @Test
+    public void putUser_whenValidRequestBodyWithPNGImageForUserWhoHasImage_removesOldImageFromStorage() throws IOException {
+        User user = userService.save(TestUtil.createValidUser("user1"));
+        authenticate(user.getUsername());
+        UserUpdateVM updatedUser = createValidUserUpdateVM();
+
+        String imageString = readFileToBase64("test-png.png");
+        updatedUser.setImage(imageString);
+
+        HttpEntity<UserUpdateVM> requestEntity = new HttpEntity<>(updatedUser);
+        ResponseEntity<UserVM> response = putUser(user.getUserId(), requestEntity, UserVM.class);
+
+        putUser(user.getUserId(), requestEntity, UserVM.class);
+        String storedImageName = response.getBody().getImage();
+        String profilePicturePath = appConfiguration.getFullProfileImagesPath() + "/" + storedImageName;
+        File storedImage = new File(profilePicturePath);
+        assertThat(storedImage.exists()).isFalse();
+    }
 
     private UserUpdateVM createValidUserUpdateVM() {
         UserUpdateVM updatedUser = new UserUpdateVM();
