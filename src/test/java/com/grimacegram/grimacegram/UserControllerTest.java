@@ -1,5 +1,6 @@
 package com.grimacegram.grimacegram;
 
+import com.grimacegram.grimacegram.configuration.AppConfiguration;
 import com.grimacegram.grimacegram.error.ApiError;
 import com.grimacegram.grimacegram.model.User;
 import com.grimacegram.grimacegram.repository.UserRepository;
@@ -7,6 +8,8 @@ import com.grimacegram.grimacegram.services.UserService;
 import com.grimacegram.grimacegram.shared.GenericResponse;
 import com.grimacegram.grimacegram.vm.UserUpdateVM;
 import com.grimacegram.grimacegram.vm.UserVM;
+import org.apache.commons.io.FileUtils;
+import org.aspectj.util.FileUtil;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -15,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -24,7 +28,10 @@ import org.springframework.http.client.support.BasicAuthenticationInterceptor;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -35,7 +42,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("testing")
+@ActiveProfiles("test")
 public class UserControllerTest {
 
     public static final String API_1_0_USERS = "/api/1.0/users";
@@ -47,6 +54,9 @@ public class UserControllerTest {
 
     @Autowired
     UserService userService;
+
+    @Autowired
+    AppConfiguration appConfiguration;
 
     @Before
     public void cleanDb(){
@@ -79,6 +89,12 @@ public class UserControllerTest {
     private void authenticate(String username){
         testRestTemplate.getRestTemplate().getInterceptors()
                 .add(new BasicAuthenticationInterceptor(username, "P4ssword"));
+    }
+    private String readFileToBase64(String fileName) throws IOException {
+        ClassPathResource imageResource = new ClassPathResource(fileName);
+        byte[] imageArr = FileUtils.readFileToByteArray(imageResource.getFile());
+        String imageString = Base64.getEncoder().encodeToString(imageArr);
+        return imageString;
     }
 
     @Test
@@ -429,10 +445,48 @@ public class UserControllerTest {
         assertThat(response.getBody().getUserDisplayName()).isEqualTo(updatedUser.getDisplayName());
 
     }
+    @Test
+    public void putUser_whenValidRequestBodyWithSupportedImageFromAuthorizedUser_receiveUserVMWithRandomImageName() throws IOException {
+        User user = userService.save(TestUtil.createValidUser("user1"));
+        authenticate(user.getUsername());
+        UserUpdateVM updatedUser = createValidUserUpdateVM();
+
+        String imageString = readFileToBase64("profile.jpg");
+        updatedUser.setImage(imageString);
+
+        HttpEntity<UserUpdateVM> requestEntity = new HttpEntity<>(updatedUser);
+        ResponseEntity<UserVM> response = putUser(user.getUserId(), requestEntity, UserVM.class);
+
+        assertThat(response.getBody().getImage()).isNotEqualTo("profile-image.jpg");
+
+    }
+    @Test
+    public void putUser_whenValidRequestBodyWithSupportedImageFromAuthorizedUser_imageIsStoredUnderProfileFolder() throws IOException {
+        User user = userService.save(TestUtil.createValidUser("user1"));
+        authenticate(user.getUsername());
+        UserUpdateVM updatedUser = createValidUserUpdateVM();
+
+        String imageString = readFileToBase64("profile.jpg");
+        updatedUser.setImage(imageString);
+
+        HttpEntity<UserUpdateVM> requestEntity = new HttpEntity<>(updatedUser);
+        ResponseEntity<UserVM> response = putUser(user.getUserId(), requestEntity, UserVM.class);
+
+        String storedImageName = response.getBody().getImage();
+        String profilePicturePath = appConfiguration.getFullProfileImagesPath() + "/" + storedImageName;
+        File storedImage = new File(profilePicturePath);
+
+        assertThat(storedImage.exists()).isTrue();
+    }
 
     private UserUpdateVM createValidUserUpdateVM() {
         UserUpdateVM updatedUser = new UserUpdateVM();
         updatedUser.setDisplayName("newDisplayName");
         return updatedUser;
+    }
+    @After
+    public void cleanDirectory() throws IOException {
+        FileUtils.cleanDirectory(new File(appConfiguration.getFullProfileImagesPath()));
+        FileUtils.cleanDirectory(new File(appConfiguration.getFullAttachmentsPath()));
     }
 }
