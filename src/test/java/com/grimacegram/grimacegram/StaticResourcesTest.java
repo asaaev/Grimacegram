@@ -6,7 +6,6 @@ import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.ClassPathResource;
@@ -56,8 +55,8 @@ public class StaticResourcesTest {
     }
     @Test
     public void getStaticFile_whenImageExistInProfileUploadFolder_receiveOk() throws Exception {
-        String fileName = "profile-picture.jpg";
-        File source = new ClassPathResource("profile.jpg").getFile();
+        String fileName = "profile-picture.jpeg";
+        File source = new ClassPathResource("profile.jpeg").getFile();
 
         File target = new File(appConfiguration.getFullProfileImagesPath() + "/" + fileName);
         FileUtils.copyFile(source, target);
@@ -66,8 +65,8 @@ public class StaticResourcesTest {
     }
     @Test
     public void getStaticFile_whenImageExistInAttachmentFolder_receiveOk() throws Exception {
-        String fileName = "profile-picture.jpg";
-        File source = new ClassPathResource("profile.jpg").getFile();
+        String fileName = "profile-picture.jpeg";
+        File source = new ClassPathResource("profile.jpeg").getFile();
 
         File target = new File(appConfiguration.getFullAttachmentsPath() + "/" + fileName);
         FileUtils.copyFile(source, target);
@@ -82,7 +81,7 @@ public class StaticResourcesTest {
     @Test
     public void getStaticFile_whenImageExistInAttachmentFolder_receiveOkWithCacheHeaders() throws Exception {
         String fileName = "profile-picture.jpg";
-        File source = new ClassPathResource("profile.jpg").getFile();
+        File source = new ClassPathResource("profile.jpeg").getFile();
 
         File target = new File(appConfiguration.getFullAttachmentsPath() + "/" + fileName);
         FileUtils.copyFile(source, target);

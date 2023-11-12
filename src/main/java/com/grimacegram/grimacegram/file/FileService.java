@@ -2,6 +2,7 @@ package com.grimacegram.grimacegram.file;
 
 import com.grimacegram.grimacegram.configuration.AppConfiguration;
 import org.apache.commons.io.FileUtils;
+import org.apache.tika.Tika;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -26,4 +27,8 @@ public class FileService {
         return imageName;
     }
 
+    public String detectType(byte[] fileArr) {
+        Tika tika = new Tika();
+        return tika.detect(fileArr);
+    }
 }

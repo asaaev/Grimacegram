@@ -9,7 +9,6 @@ import com.grimacegram.grimacegram.shared.GenericResponse;
 import com.grimacegram.grimacegram.vm.UserUpdateVM;
 import com.grimacegram.grimacegram.vm.UserVM;
 import org.apache.commons.io.FileUtils;
-import org.aspectj.util.FileUtil;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,7 +18,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -451,7 +449,7 @@ public class UserControllerTest {
         authenticate(user.getUsername());
         UserUpdateVM updatedUser = createValidUserUpdateVM();
 
-        String imageString = readFileToBase64("profile.jpg");
+        String imageString = readFileToBase64("profile.jpeg");
         updatedUser.setImage(imageString);
 
         HttpEntity<UserUpdateVM> requestEntity = new HttpEntity<>(updatedUser);
@@ -466,7 +464,7 @@ public class UserControllerTest {
         authenticate(user.getUsername());
         UserUpdateVM updatedUser = createValidUserUpdateVM();
 
-        String imageString = readFileToBase64("profile.jpg");
+        String imageString = readFileToBase64("profile.jpeg");
         updatedUser.setImage(imageString);
 
         HttpEntity<UserUpdateVM> requestEntity = new HttpEntity<>(updatedUser);
