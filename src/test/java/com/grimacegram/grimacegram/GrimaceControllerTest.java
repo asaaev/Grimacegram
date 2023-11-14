@@ -17,6 +17,10 @@ import org.springframework.http.client.support.BasicAuthenticationInterceptor;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 
@@ -90,6 +94,52 @@ public class GrimaceControllerTest {
         Grimace inDB = grimaceRepository.findAll().get(0);
 
         assertThat(inDB.getTimestamp()).isNotNull();
+    }
+    @Test
+    public void postGrimace_whenGrimaceContentIsValidAndUserIsAuthorized_receiveBadRequest() {
+        userService.save(TestUtil.createValidUser("user1"));
+        authenticate("user1");
+        Grimace grimace = new Grimace();
+        ResponseEntity<Object> response = postGrimace(grimace, Object.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+    @Test
+    public void postGrimace_whenGrimaceContentLessThan10CharactersAndUserIsAuthorized_receiveBadRequest() {
+        userService.save(TestUtil.createValidUser("user1"));
+        authenticate("user1");
+        Grimace grimace = new Grimace();
+        grimace.setContent("123456789");
+        ResponseEntity<Object> response = postGrimace(grimace, Object.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+    @Test
+    public void postGrimace_whenGrimaceContentIs5000CharactersAndUserIsAuthorized_receiveOk() {
+        userService.save(TestUtil.createValidUser("user1"));
+        authenticate("user1");
+        Grimace grimace = new Grimace();
+        String veryLongString = IntStream.rangeClosed(1, 5000).mapToObj(i -> "x").collect(Collectors.joining());
+        grimace.setContent(veryLongString);
+        ResponseEntity<Object> response = postGrimace(grimace, Object.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+    @Test
+    public void postGrimace_whenGrimaceContentMore5000CharactersAndUserIsAuthorized_receiveBadRequest() {
+        userService.save(TestUtil.createValidUser("user1"));
+        authenticate("user1");
+        Grimace grimace = new Grimace();
+        String veryLongString = IntStream.rangeClosed(1, 5000).mapToObj(i -> "x").collect(Collectors.joining());
+        grimace.setContent(veryLongString+1);
+        ResponseEntity<Object> response = postGrimace(grimace, Object.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+    @Test
+    public void postGrimace_whenGrimaceContentNullAndUserIsAuthorized_receiveApiErrorWithValidationErrors() {
+        userService.save(TestUtil.createValidUser("user1"));
+        authenticate("user1");
+        Grimace grimace = new Grimace();
+        ResponseEntity<ApiError> response = postGrimace(grimace, ApiError.class);
+        Map<String, String> validationErrors = response.getBody().getValidationErrors();
+        assertThat(validationErrors.get("content")).isNotNull();
     }
 
 }

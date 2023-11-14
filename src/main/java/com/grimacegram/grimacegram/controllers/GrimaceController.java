@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.Valid;
+
 @RestController
 @RequestMapping("/api/1.0")
 public class GrimaceController {
@@ -16,7 +18,7 @@ public class GrimaceController {
     GrimaceService grimaceService;
 
     @PostMapping("/grimace")
-    void createGrimace(@RequestBody Grimace grimace){
+    void createGrimace(@Valid @RequestBody Grimace grimace){
         grimaceService.save(grimace);
     }
 }
