@@ -17,7 +17,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.support.BasicAuthenticationInterceptor;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.transaction.TestTransaction;
+import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.PersistenceUnit;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -37,6 +42,9 @@ public class GrimaceControllerTest {
     UserRepository userRepository;
     @Autowired
     GrimaceRepository grimaceRepository;
+
+    @PersistenceUnit
+    private EntityManagerFactory entityManagerFactory;
 
     @Before
     public void cleanup() {
@@ -156,13 +164,15 @@ public class GrimaceControllerTest {
     }
     @Test
     public void postGrimace_whenGrimaceIsValidAndUserIsAuthorized_grimaceCanBeAccessedFromUserEntity() {
-        userService.save(TestUtil.createValidUser("user1"));
+        User user = userService.save(TestUtil.createValidUser("user1"));
+
         authenticate("user1");
         Grimace grimace = TestUtil.createValidGrimace();
         postGrimace(grimace, Object.class);
 
-        User inDBUser = userRepository.findByUsername("user1");
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
 
+        User inDBUser = entityManager.find(User.class, user.getUserId());
         assertThat(inDBUser.getGrimaceList().size()).isEqualTo(1);
     }
 
