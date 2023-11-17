@@ -1,7 +1,9 @@
 package com.grimacegram.grimacegram.controllers;
 
 import com.grimacegram.grimacegram.grimace.Grimace;
+import com.grimacegram.grimacegram.model.User;
 import com.grimacegram.grimacegram.services.GrimaceService;
+import com.grimacegram.grimacegram.shared.CurrentUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,7 +20,7 @@ public class GrimaceController {
     GrimaceService grimaceService;
 
     @PostMapping("/grimace")
-    void createGrimace(@Valid @RequestBody Grimace grimace){
-        grimaceService.save(grimace);
+    void createGrimace(@Valid @RequestBody Grimace grimace, @CurrentUser User user){
+        grimaceService.save(user, grimace);
     }
 }

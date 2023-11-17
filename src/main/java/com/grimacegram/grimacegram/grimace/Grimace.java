@@ -1,5 +1,6 @@
 package com.grimacegram.grimacegram.grimace;
 
+import com.grimacegram.grimacegram.model.User;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -21,4 +22,10 @@ public class Grimace {
 
     @Temporal(TemporalType.TIMESTAMP)
     private Date timestamp;
+
+
+
+
+    @ManyToOne
+    private User user;
 }

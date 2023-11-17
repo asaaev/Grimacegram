@@ -2,6 +2,7 @@ package com.grimacegram.grimacegram;
 
 import com.grimacegram.grimacegram.error.ApiError;
 import com.grimacegram.grimacegram.grimace.Grimace;
+import com.grimacegram.grimacegram.model.User;
 import com.grimacegram.grimacegram.repository.GrimaceRepository;
 import com.grimacegram.grimacegram.repository.UserRepository;
 import com.grimacegram.grimacegram.services.UserService;
@@ -39,8 +40,9 @@ public class GrimaceControllerTest {
 
     @Before
     public void cleanup() {
-        userRepository.deleteAll();
         grimaceRepository.deleteAll();
+        userRepository.deleteAll();
+
         testRestTemplate.getRestTemplate().getInterceptors().clear();
     }
 
@@ -140,6 +142,28 @@ public class GrimaceControllerTest {
         ResponseEntity<ApiError> response = postGrimace(grimace, ApiError.class);
         Map<String, String> validationErrors = response.getBody().getValidationErrors();
         assertThat(validationErrors.get("content")).isNotNull();
+    }
+    @Test
+    public void postGrimace_whenGrimaceIsValidAndUserIsAuthorized_grimaceSavedWithAuthenticatedUserInfo() {
+        userService.save(TestUtil.createValidUser("user1"));
+        authenticate("user1");
+        Grimace grimace = TestUtil.createValidGrimace();
+        postGrimace(grimace, Object.class);
+
+        Grimace inDB = grimaceRepository.findAll().get(0);
+
+        assertThat(inDB.getUser().getUsername()).isEqualTo("user1");
+    }
+    @Test
+    public void postGrimace_whenGrimaceIsValidAndUserIsAuthorized_grimaceCanBeAccessedFromUserEntity() {
+        userService.save(TestUtil.createValidUser("user1"));
+        authenticate("user1");
+        Grimace grimace = TestUtil.createValidGrimace();
+        postGrimace(grimace, Object.class);
+
+        User inDBUser = userRepository.findByUsername("user1");
+
+        assertThat(inDBUser.getGrimaceList().size()).isEqualTo(1);
     }
 
 }
