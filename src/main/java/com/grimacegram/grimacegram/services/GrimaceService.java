@@ -3,6 +3,8 @@ package com.grimacegram.grimacegram.services;
 import com.grimacegram.grimacegram.grimace.Grimace;
 import com.grimacegram.grimacegram.model.User;
 import com.grimacegram.grimacegram.repository.GrimaceRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -22,4 +24,7 @@ public class GrimaceService {
         grimaceRepository.save(grimace);
     }
 
+    public Page<Grimace> getAllGrimaces(Pageable pageable) {
+        return grimaceRepository.findAll(pageable);
+    }
 }

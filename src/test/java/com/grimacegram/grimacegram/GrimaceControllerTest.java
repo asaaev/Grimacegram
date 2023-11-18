@@ -5,6 +5,7 @@ import com.grimacegram.grimacegram.grimace.Grimace;
 import com.grimacegram.grimacegram.model.User;
 import com.grimacegram.grimacegram.repository.GrimaceRepository;
 import com.grimacegram.grimacegram.repository.UserRepository;
+import com.grimacegram.grimacegram.services.GrimaceService;
 import com.grimacegram.grimacegram.services.UserService;
 import org.junit.Before;
 import org.junit.Test;
@@ -12,6 +13,8 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.support.BasicAuthenticationInterceptor;
@@ -42,6 +45,8 @@ public class GrimaceControllerTest {
     UserRepository userRepository;
     @Autowired
     GrimaceRepository grimaceRepository;
+    @Autowired
+    GrimaceService grimaceService;
 
     @PersistenceUnit
     private EntityManagerFactory entityManagerFactory;
@@ -62,6 +67,9 @@ public class GrimaceControllerTest {
     private static final String API_1_0_GRIMACES = "/api/1.0/grimace";
     private <T> ResponseEntity<T> postGrimace(Grimace grimace, Class<T> responceType) {
         return testRestTemplate.postForEntity(API_1_0_GRIMACES, grimace, responceType);
+    }
+    public <T> ResponseEntity <T> getGrimaces(ParameterizedTypeReference<T> responseType){
+        return  testRestTemplate.exchange(API_1_0_GRIMACES, HttpMethod.GET, null, responseType);
     }
     @Test
     public void postGrimace_whenGrimaceIsValidAndUserIsAuthorized_receiveOk() {
@@ -175,5 +183,29 @@ public class GrimaceControllerTest {
         User inDBUser = entityManager.find(User.class, user.getUserId());
         assertThat(inDBUser.getGrimaceList().size()).isEqualTo(1);
     }
+    @Test
+    public void getGrimace_whenThereAreNoGrimaces_receiveOk(){
+        ResponseEntity<Object> response = getGrimaces(new ParameterizedTypeReference<Object>() {
+        });
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+    @Test
+    public void getGrimace_whenThereAreNoGrimaces_receivePageWithZeroItems(){
+        ResponseEntity<TestPage<Object>> response = getGrimaces(new ParameterizedTypeReference<TestPage<Object>>() {
+        });
+        assertThat(response.getBody().getTotalElements()).isEqualTo(0);
+    }
+    @Test
+    public void getGrimace_whenThereAreGrimaces_receivePageWithItems(){
+        User user = userService.save(TestUtil.createValidUser("user1"));
+        grimaceService.save(user, TestUtil.createValidGrimace());
+        grimaceService.save(user, TestUtil.createValidGrimace());
+        grimaceService.save(user, TestUtil.createValidGrimace());
+
+        ResponseEntity<TestPage<Object>> response = getGrimaces(new ParameterizedTypeReference<TestPage<Object>>() {
+        });
+        assertThat(response.getBody().getTotalElements()).isEqualTo(3);
+    }
+
 
 }
