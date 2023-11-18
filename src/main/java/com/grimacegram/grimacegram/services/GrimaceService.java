@@ -18,10 +18,10 @@ public class GrimaceService {
         this.grimaceRepository = grimaceRepository;
     }
 
-    public void save(User user, Grimace grimace) {
+    public Grimace save(User user, Grimace grimace) {
         grimace.setTimestamp(new Date());
         grimace.setUser(user);
-        grimaceRepository.save(grimace);
+        return grimaceRepository.save(grimace);
     }
 
     public Page<Grimace> getAllGrimaces(Pageable pageable) {

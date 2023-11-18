@@ -7,6 +7,7 @@ import com.grimacegram.grimacegram.repository.GrimaceRepository;
 import com.grimacegram.grimacegram.repository.UserRepository;
 import com.grimacegram.grimacegram.services.GrimaceService;
 import com.grimacegram.grimacegram.services.UserService;
+import com.grimacegram.grimacegram.vm.GrimaceVM;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -206,6 +207,23 @@ public class GrimaceControllerTest {
         });
         assertThat(response.getBody().getTotalElements()).isEqualTo(3);
     }
+    @Test
+    public void getGrimace_whenThereAreGrimaces_receivePageWithGrimaceVM(){
+        User user = userService.save(TestUtil.createValidUser("user1"));
+        grimaceService.save(user, TestUtil.createValidGrimace());
 
+        ResponseEntity<TestPage<GrimaceVM>> response = getGrimaces(new ParameterizedTypeReference<TestPage<GrimaceVM>>() {
+        });
+        GrimaceVM storedGrimace = response.getBody().getContent().get(0);
+        assertThat(storedGrimace.getUser().getUsername()).isEqualTo("user1");
+    }
+    @Test
+    public void postGrimace_whenGrimaceIsValidAndUserIsAuthorized_receiveGrimaceVM() {
+        userService.save(TestUtil.createValidUser("user1"));
+        authenticate("user1");
+        Grimace grimace = TestUtil.createValidGrimace();
+        ResponseEntity<GrimaceVM> response = postGrimace(grimace, GrimaceVM.class);
+        assertThat(response.getBody().getUser().getUsername()).isEqualTo("user1");
+    }
 
 }

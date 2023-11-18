@@ -28,6 +28,5 @@ public class Grimace {
 
 
     @ManyToOne
-    @JsonIgnore
     private User user;
 }
