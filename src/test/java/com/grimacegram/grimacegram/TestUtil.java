@@ -1,5 +1,6 @@
 package com.grimacegram.grimacegram;
 
+import com.grimacegram.grimacegram.grimace.Grimace;
 import com.grimacegram.grimacegram.model.User;
 
 public class TestUtil {
@@ -15,5 +16,11 @@ public class TestUtil {
         User user = createValidUser();
         user.setUsername(username);
         return user;
+    }
+
+    public static Grimace createValidGrimace(){
+        Grimace grimace = new Grimace();
+        grimace.setContent("test content for the test grimace");
+        return grimace;
     }
 }
