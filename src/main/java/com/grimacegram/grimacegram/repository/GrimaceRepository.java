@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface GrimaceRepository extends JpaRepository<Grimace, Long> {
     Page<Grimace> findByUser(User user, Pageable pageable);
+
+    Page<Grimace> findByIdLessThan(long id, Pageable pageable);
 }

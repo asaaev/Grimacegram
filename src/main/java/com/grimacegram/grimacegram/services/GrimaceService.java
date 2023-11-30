@@ -34,4 +34,8 @@ public class GrimaceService {
         User inDB = userService.getByUsername(username);
         return grimaceRepository.findByUser(inDB, pageable);
     }
+
+    public Page<Grimace> getOldGrimaces(long id, Pageable pageable) {
+        return grimaceRepository.findByIdLessThan(id, pageable);
+    }
 }
