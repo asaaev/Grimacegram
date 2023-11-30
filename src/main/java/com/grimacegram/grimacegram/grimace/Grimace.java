@@ -1,5 +1,6 @@
 package com.grimacegram.grimacegram.grimace;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.grimacegram.grimacegram.model.User;
 import lombok.Data;
 
