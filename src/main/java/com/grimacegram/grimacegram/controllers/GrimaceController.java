@@ -27,4 +27,10 @@ public class GrimaceController {
     Page<GrimaceVM> getAllGrimaces(Pageable pageable){
         return grimaceService.getAllGrimaces(pageable).map(GrimaceVM::new);
     }
+
+    @GetMapping("/users/{username}/grimace")
+    Page<GrimaceVM> getGrimaceOfUser(@PathVariable String username, Pageable pageable){
+        return grimaceService.getGrimaceOfUser(username, pageable).map(GrimaceVM::new);
+
+    }
 }

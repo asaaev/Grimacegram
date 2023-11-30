@@ -13,9 +13,11 @@ import java.util.Date;
 public class GrimaceService {
 
     GrimaceRepository grimaceRepository;
-    public GrimaceService (GrimaceRepository grimaceRepository){
+    UserService userService;
+    public GrimaceService (GrimaceRepository grimaceRepository, UserService userService){
         super();
         this.grimaceRepository = grimaceRepository;
+        this.userService = userService;
     }
 
     public Grimace save(User user, Grimace grimace) {
@@ -26,5 +28,10 @@ public class GrimaceService {
 
     public Page<Grimace> getAllGrimaces(Pageable pageable) {
         return grimaceRepository.findAll(pageable);
+    }
+
+    public Page<Grimace> getGrimaceOfUser(String username, Pageable pageable) {
+        User inDB = userService.getByUsername(username);
+        return grimaceRepository.findByUser(inDB, pageable);
     }
 }
