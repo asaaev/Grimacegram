@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.List;
 
 @Service
 public class GrimaceService {
@@ -42,5 +43,9 @@ public class GrimaceService {
     public Page<Grimace> getOldGrimacesOfUser(long id, String username, Pageable pageable) {
         User inDB = userService.getByUsername(username);
         return grimaceRepository.findByIdLessThanAndUser(id, inDB, pageable);
+    }
+
+    public List<Grimace> getNewGrimace(long id, Pageable pageable) {
+        return grimaceRepository.findByIdGreaterThan(id, pageable.getSort());
     }
 }
