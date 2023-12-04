@@ -81,6 +81,10 @@ public class GrimaceControllerTest {
         String path = API_1_0_GRIMACES + "/" + grimaceId + "?direction=before&page=0&size=5&sort=id,desc";
         return testRestTemplate.exchange(path, HttpMethod.GET,null, responseType);
     }
+    public <T> ResponseEntity <T> getOldGrimacesOfUser(long grimaceId,String username, ParameterizedTypeReference<T> responseType){
+        String path = "/api/1.0/users/" + username + "/grimace" + "/" +grimaceId + "?direction=before&page=0&size=5&sort=id,desc";
+        return testRestTemplate.exchange(path, HttpMethod.GET,null, responseType);
+    }
     @Test
     public void postGrimace_whenGrimaceIsValidAndUserIsAuthorized_receiveOk() {
         userService.save(TestUtil.createValidUser("user1"));
@@ -322,5 +326,58 @@ public class GrimaceControllerTest {
         });
         assertThat(response.getBody().getContent().get(0).getDate()).isGreaterThan(0);
     }
+    @Test
+    public void getOldGrimacesOfUser_henUserExistThereAreNoGrimaces_receiveOk(){
+        userService.save(TestUtil.createValidUser("user1"));
+        ResponseEntity<Object> response = getOldGrimacesOfUser(5, "user1", new ParameterizedTypeReference<Object>() {
+        });
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+    @Test
+    public void getOldGrimacesOfUser_whenUserExistAndThereAreGrimaces_receivePageWithItemsProvidedId(){
+        User user = userService.save(TestUtil.createValidUser("user1"));
+        grimaceService.save(user, TestUtil.createValidGrimace());
+        grimaceService.save(user, TestUtil.createValidGrimace());
+        grimaceService.save(user, TestUtil.createValidGrimace());
+        Grimace fourth = grimaceService.save(user, TestUtil.createValidGrimace());
+        grimaceService.save(user, TestUtil.createValidGrimace());
 
+        ResponseEntity<TestPage<Object>> response = getOldGrimacesOfUser(fourth.getId(), "user1", new ParameterizedTypeReference<TestPage<Object>>() {
+        });
+        assertThat(response.getBody().getTotalElements()).isEqualTo(3);
+    }
+    @Test
+    public void getOldGrimacesOfUser_whenUserExistAndThereAreGrimaces_receivePageWithGrimaceVMBeforeProvidedId(){
+        User user = userService.save(TestUtil.createValidUser("user1"));
+        grimaceService.save(user, TestUtil.createValidGrimace());
+        grimaceService.save(user, TestUtil.createValidGrimace());
+        grimaceService.save(user, TestUtil.createValidGrimace());
+        Grimace fourth = grimaceService.save(user, TestUtil.createValidGrimace());
+        grimaceService.save(user, TestUtil.createValidGrimace());
+
+        ResponseEntity<TestPage<GrimaceVM>> response = getOldGrimacesOfUser(fourth.getId(), "user1", new ParameterizedTypeReference<TestPage<GrimaceVM>>() {
+        });
+        assertThat(response.getBody().getContent().get(0).getDate()).isGreaterThan(0);
+    }
+    @Test
+    public void getOldGrimacesOfUser_whenUserDoesNotExistThereAreNoGrimaces_receiveNotFound(){
+        ResponseEntity<Object> response = getOldGrimacesOfUser(5, "user1", new ParameterizedTypeReference<Object>() {
+        });
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+    @Test
+    public void getOldGrimacesOfUser_whenUserExistAndThereAreNoGrimaces_receivePageWithZeroItemsBeforeProvidedId(){
+        User user = userService.save(TestUtil.createValidUser("user1"));
+        grimaceService.save(user, TestUtil.createValidGrimace());
+        grimaceService.save(user, TestUtil.createValidGrimace());
+        grimaceService.save(user, TestUtil.createValidGrimace());
+        Grimace fourth = grimaceService.save(user, TestUtil.createValidGrimace());
+        grimaceService.save(user, TestUtil.createValidGrimace());
+
+        userService.save(TestUtil.createValidUser("user2"));
+
+        ResponseEntity<TestPage<GrimaceVM>> response = getOldGrimacesOfUser(fourth.getId(), "user2", new ParameterizedTypeReference<TestPage<GrimaceVM>>() {
+        });
+        assertThat(response.getBody().getTotalElements()).isEqualTo(0);
+    }
 }

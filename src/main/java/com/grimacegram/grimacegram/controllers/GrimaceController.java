@@ -37,4 +37,8 @@ public class GrimaceController {
     Page<?> getGrimaceRelative(@PathVariable long id, Pageable pageable){
         return grimaceService.getOldGrimaces(id, pageable).map(GrimaceVM::new);
     }
+    @GetMapping("/users/{username}/grimace/{id:[0-9]+}")
+    Page<?> getGrimaceRelativeForUser(@PathVariable String username, @PathVariable long id, Pageable pageable){
+        return grimaceService.getOldGrimacesOfUser(id, username, pageable).map(GrimaceVM::new);
+    }
 }

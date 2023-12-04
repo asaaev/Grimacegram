@@ -10,4 +10,6 @@ public interface GrimaceRepository extends JpaRepository<Grimace, Long> {
     Page<Grimace> findByUser(User user, Pageable pageable);
 
     Page<Grimace> findByIdLessThan(long id, Pageable pageable);
+
+    Page<Grimace> findByIdLessThanAndUser(long id, User user, Pageable pageable);
 }
