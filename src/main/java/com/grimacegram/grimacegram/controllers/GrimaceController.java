@@ -37,7 +37,8 @@ public class GrimaceController {
     }
 
     @GetMapping("/grimace/{id:[0-9]+}")
-    ResponseEntity<?> getGrimaceRelative(@PathVariable long id, Pageable pageable, @RequestParam(name = "direction", defaultValue = "after") String direction){
+    ResponseEntity<?> getGrimaceRelative(@PathVariable long id, Pageable pageable,
+                                         @RequestParam(name = "direction", defaultValue = "after") String direction){
         if (!direction.equalsIgnoreCase("after")) {
             return ResponseEntity.ok(grimaceService.getOldGrimaces(id, pageable).map(GrimaceVM::new));
         }
@@ -45,7 +46,13 @@ public class GrimaceController {
         return ResponseEntity.ok(newGrimace);
     }
     @GetMapping("/users/{username}/grimace/{id:[0-9]+}")
-    Page<?> getGrimaceRelativeForUser(@PathVariable String username, @PathVariable long id, Pageable pageable){
-        return grimaceService.getOldGrimacesOfUser(id, username, pageable).map(GrimaceVM::new);
+    ResponseEntity<?> getGrimaceRelativeForUser(@PathVariable String username, @PathVariable long id, Pageable pageable,
+                                      @RequestParam(name = "direction", defaultValue = "after") String direction){
+        if (!direction.equalsIgnoreCase("after")) {
+            return ResponseEntity.ok(grimaceService.getOldGrimacesOfUser(id, username, pageable).map(GrimaceVM::new));
+        }
+        List<GrimaceVM> newGrimaces = grimaceService.getNewGrimaceOfUser(id, username, pageable).stream()
+                .map(GrimaceVM::new).collect(Collectors.toList());
+        return ResponseEntity.ok(newGrimaces);
     }
 }

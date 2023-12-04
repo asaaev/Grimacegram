@@ -48,4 +48,9 @@ public class GrimaceService {
     public List<Grimace> getNewGrimace(long id, Pageable pageable) {
         return grimaceRepository.findByIdGreaterThan(id, pageable.getSort());
     }
+
+    public List<Grimace> getNewGrimaceOfUser(long id, String username, Pageable pageable) {
+        User inDB = userService.getByUsername(username);
+        return grimaceRepository.findByIdGreaterThanAndUser(id, inDB, pageable.getSort());
+    }
 }

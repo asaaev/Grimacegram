@@ -83,11 +83,15 @@ public class GrimaceControllerTest {
         return testRestTemplate.exchange(path, HttpMethod.GET,null, responseType);
     }
     public <T> ResponseEntity <T> getOldGrimacesOfUser(long grimaceId,String username, ParameterizedTypeReference<T> responseType){
-        String path = "/api/1.0/users/" + username + "/grimace" + "/" +grimaceId + "?direction=before&page=0&size=5&sort=id,desc";
+        String path = "/api/1.0/users/" + username + "/grimace" + "/" + grimaceId + "?direction=before&page=0&size=5&sort=id,desc";
         return testRestTemplate.exchange(path, HttpMethod.GET,null, responseType);
     }
     public <T> ResponseEntity <T> getNewGrimaces(long grimaceId, ParameterizedTypeReference<T> responseType){
         String path = API_1_0_GRIMACES + "/" + grimaceId + "?direction=after&sort=id,desc";
+        return testRestTemplate.exchange(path, HttpMethod.GET,null, responseType);
+    }
+    public <T> ResponseEntity <T> getNewGrimacesOfUser(long grimaceId,String username, ParameterizedTypeReference<T> responseType){
+        String path = "/api/1.0/users/" + username + "/grimace" + "/" + grimaceId + "?direction=after&sort=id,desc";
         return testRestTemplate.exchange(path, HttpMethod.GET,null, responseType);
     }
     @Test
@@ -410,5 +414,59 @@ public class GrimaceControllerTest {
         ResponseEntity<List<GrimaceVM>> response = getNewGrimaces(fourth.getId(), new ParameterizedTypeReference<List<GrimaceVM>>() {
         });
         assertThat(response.getBody().get(0).getDate()).isGreaterThan(0);
+    }
+    @Test
+    public void getNewGrimacesOfUser_WhenUserExistThereAreNoGrimaces_receiveOk(){
+        userService.save(TestUtil.createValidUser("user1"));
+        ResponseEntity<Object> response = getNewGrimacesOfUser(5, "user1", new ParameterizedTypeReference<Object>() {
+        });
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+    @Test
+    public void getNewGrimacesOfUser_whenUserExistAndThereAreGrimaces_receiveListWithItemsAfterProvidedId(){
+        User user = userService.save(TestUtil.createValidUser("user1"));
+        grimaceService.save(user, TestUtil.createValidGrimace());
+        grimaceService.save(user, TestUtil.createValidGrimace());
+        grimaceService.save(user, TestUtil.createValidGrimace());
+        Grimace fourth = grimaceService.save(user, TestUtil.createValidGrimace());
+        grimaceService.save(user, TestUtil.createValidGrimace());
+
+        ResponseEntity<List<Object>> response = getNewGrimacesOfUser(fourth.getId(), "user1", new ParameterizedTypeReference<List<Object>>() {
+        });
+        assertThat(response.getBody().size()).isEqualTo(1);
+    }
+    @Test
+    public void getNewGrimacesOfUser_whenUserExistAndThereAreGrimaces_receiveListWithGrimaceVMAfterProvidedId(){
+        User user = userService.save(TestUtil.createValidUser("user1"));
+        grimaceService.save(user, TestUtil.createValidGrimace());
+        grimaceService.save(user, TestUtil.createValidGrimace());
+        grimaceService.save(user, TestUtil.createValidGrimace());
+        Grimace fourth = grimaceService.save(user, TestUtil.createValidGrimace());
+        grimaceService.save(user, TestUtil.createValidGrimace());
+
+        ResponseEntity<List<GrimaceVM>> response = getNewGrimacesOfUser(fourth.getId(), "user1", new ParameterizedTypeReference<List<GrimaceVM>>() {
+        });
+        assertThat(response.getBody().get(0).getDate()).isGreaterThan(0);
+    }
+    @Test
+    public void getNewGrimacesOfUser_whenUserDoesNotExistThereAreNoGrimaces_receiveNotFound(){
+        ResponseEntity<Object> response = getNewGrimacesOfUser(5, "user1", new ParameterizedTypeReference<Object>() {
+        });
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+    @Test
+    public void getNewGrimacesOfUser_whenUserExistAndThereAreNoGrimaces_receiveListWithZeroItemsAfterProvidedId(){
+        User user = userService.save(TestUtil.createValidUser("user1"));
+        grimaceService.save(user, TestUtil.createValidGrimace());
+        grimaceService.save(user, TestUtil.createValidGrimace());
+        grimaceService.save(user, TestUtil.createValidGrimace());
+        Grimace fourth = grimaceService.save(user, TestUtil.createValidGrimace());
+        grimaceService.save(user, TestUtil.createValidGrimace());
+
+        userService.save(TestUtil.createValidUser("user2"));
+
+        ResponseEntity<List<GrimaceVM>> response = getNewGrimacesOfUser(fourth.getId(), "user2", new ParameterizedTypeReference<List<GrimaceVM>>() {
+        });
+        assertThat(response.getBody().size()).isEqualTo(0);
     }
 }
