@@ -94,6 +94,14 @@ public class GrimaceControllerTest {
         String path = "/api/1.0/users/" + username + "/grimace" + "/" + grimaceId + "?direction=after&sort=id,desc";
         return testRestTemplate.exchange(path, HttpMethod.GET,null, responseType);
     }
+    public <T> ResponseEntity <T> getNewGrimaceCount(long grimaceId, ParameterizedTypeReference<T> responseType){
+        String path = API_1_0_GRIMACES + "/" + grimaceId + "?direction=after&count=true";
+        return testRestTemplate.exchange(path, HttpMethod.GET,null, responseType);
+    }
+    public <T> ResponseEntity <T> getNewGrimaceCountOfUser(long grimaceId, String username, ParameterizedTypeReference<T> responseType){
+        String path = "/api/1.0/users/" + username + "/grimace" + "/" + grimaceId + "?direction=after&count=true";
+        return testRestTemplate.exchange(path, HttpMethod.GET,null, responseType);
+    }
     @Test
     public void postGrimace_whenGrimaceIsValidAndUserIsAuthorized_receiveOk() {
         userService.save(TestUtil.createValidUser("user1"));
@@ -468,5 +476,31 @@ public class GrimaceControllerTest {
         ResponseEntity<List<GrimaceVM>> response = getNewGrimacesOfUser(fourth.getId(), "user2", new ParameterizedTypeReference<List<GrimaceVM>>() {
         });
         assertThat(response.getBody().size()).isEqualTo(0);
+    }
+    @Test
+    public void getNewGrimaceCount_whenThereAreGrimaces_receiveCountAfterProvidedId(){
+        User user = userService.save(TestUtil.createValidUser("user1"));
+        grimaceService.save(user, TestUtil.createValidGrimace());
+        grimaceService.save(user, TestUtil.createValidGrimace());
+        grimaceService.save(user, TestUtil.createValidGrimace());
+        Grimace fourth = grimaceService.save(user, TestUtil.createValidGrimace());
+        grimaceService.save(user, TestUtil.createValidGrimace());
+
+        ResponseEntity<Map<String, Long>> response = getNewGrimaceCount(fourth.getId(), new ParameterizedTypeReference<Map<String, Long>>() {
+        });
+        assertThat(response.getBody().get("count")).isEqualTo(1);
+    }
+    @Test
+    public void getNewGrimaceCountOfUser_whenThereAreGrimaces_receiveCountAfterProvidedId(){
+        User user = userService.save(TestUtil.createValidUser("user1"));
+        grimaceService.save(user, TestUtil.createValidGrimace());
+        grimaceService.save(user, TestUtil.createValidGrimace());
+        grimaceService.save(user, TestUtil.createValidGrimace());
+        Grimace fourth = grimaceService.save(user, TestUtil.createValidGrimace());
+        grimaceService.save(user, TestUtil.createValidGrimace());
+
+        ResponseEntity<Map<String, Long>> response = getNewGrimaceCountOfUser(fourth.getId(), "user1", new ParameterizedTypeReference<Map<String, Long>>() {
+        });
+        assertThat(response.getBody().get("count")).isEqualTo(1);
     }
 }

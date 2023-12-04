@@ -19,4 +19,7 @@ public interface GrimaceRepository extends JpaRepository<Grimace, Long> {
     Page<Grimace> findByIdLessThanAndUser(long id, User user, Pageable pageable);
 
     List<Grimace> findByIdGreaterThanAndUser(long id, User user, Sort sort);
+
+    long countByIdGreaterThan(long id);
+    long countByIdGreaterThanAndUser(long id, User user);
 }

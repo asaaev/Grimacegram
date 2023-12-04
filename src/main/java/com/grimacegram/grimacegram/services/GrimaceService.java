@@ -53,4 +53,13 @@ public class GrimaceService {
         User inDB = userService.getByUsername(username);
         return grimaceRepository.findByIdGreaterThanAndUser(id, inDB, pageable.getSort());
     }
+
+    public long getNewGrimacesCount(long id) {
+        return grimaceRepository.countByIdGreaterThan(id);
+    }
+
+    public long getNewGrimacesCountOfUser(long id, String username) {
+        User inDB = userService.getByUsername(username);
+        return grimaceRepository.countByIdGreaterThanAndUser(id, inDB);
+    }
 }
