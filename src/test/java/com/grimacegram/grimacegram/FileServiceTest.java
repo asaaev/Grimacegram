@@ -1,7 +1,7 @@
 package com.grimacegram.grimacegram;
 
 import com.grimacegram.grimacegram.configuration.AppConfiguration;
-import com.grimacegram.grimacegram.file.FileService;
+import com.grimacegram.grimacegram.services.FileService;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;

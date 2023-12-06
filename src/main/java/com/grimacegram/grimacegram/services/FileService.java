@@ -1,4 +1,4 @@
-package com.grimacegram.grimacegram.file;
+package com.grimacegram.grimacegram.services;
 
 import com.grimacegram.grimacegram.configuration.AppConfiguration;
 import org.apache.commons.io.FileUtils;
