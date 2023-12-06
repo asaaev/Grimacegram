@@ -37,33 +37,21 @@ public class GrimaceController {
         return grimaceService.getGrimaceOfUser(username, pageable).map(GrimaceVM::new);
     }
 
-    @GetMapping("/grimace/{id:[0-9]+}")
-    ResponseEntity<?> getGrimaceRelative(@PathVariable long id, Pageable pageable,
-                                         @RequestParam(name = "direction", defaultValue = "after") String direction,
+    @GetMapping({"/grimace/{id:[0-9]+}", "/users/{username}/grimace/{id:[0-9]+}"})
+    ResponseEntity<?> getGrimaceRelative(@PathVariable long id,
+        @PathVariable(required = false) String username,
+        Pageable pageable,
+@RequestParam(name = "direction", defaultValue = "after") String direction,
                                          @RequestParam(name = "count", defaultValue = "false", required = false) boolean count){
         if (!direction.equalsIgnoreCase("after")) {
-            return ResponseEntity.ok(grimaceService.getOldGrimaces(id, pageable).map(GrimaceVM::new));
+            return ResponseEntity.ok(grimaceService.getOldGrimaces(id, username, pageable).map(GrimaceVM::new));
         }
         if (count == true) {
-            long newGrimaceCount = grimaceService.getNewGrimacesCount(id);
+            long newGrimaceCount = grimaceService.getNewGrimacesCount(id, username);
             return ResponseEntity.ok(Collections.singletonMap("count", newGrimaceCount));
         }
-        List<GrimaceVM> newGrimace = grimaceService.getNewGrimace(id, pageable).stream().map(GrimaceVM::new).collect(Collectors.toList());
+        List<GrimaceVM> newGrimace = grimaceService.getNewGrimace(id, username, pageable).stream().map(GrimaceVM::new).collect(Collectors.toList());
         return ResponseEntity.ok(newGrimace);
     }
-    @GetMapping("/users/{username}/grimace/{id:[0-9]+}")
-    ResponseEntity<?> getGrimaceRelativeForUser(@PathVariable String username, @PathVariable long id, Pageable pageable,
-                                                @RequestParam(name = "direction", defaultValue = "after") String direction,
-                                                @RequestParam(name = "count", defaultValue = "false", required = false) boolean count){
-        if (!direction.equalsIgnoreCase("after")) {
-            return ResponseEntity.ok(grimaceService.getOldGrimacesOfUser(id, username, pageable).map(GrimaceVM::new));
-        }
-        if (count == true){
-            long newGrimaceCount = grimaceService.getNewGrimacesCountOfUser(id, username);
-            return ResponseEntity.ok(Collections.singletonMap("count", newGrimaceCount));
-        }
-        List<GrimaceVM> newGrimaces = grimaceService.getNewGrimaceOfUser(id, username, pageable).stream()
-                .map(GrimaceVM::new).collect(Collectors.toList());
-        return ResponseEntity.ok(newGrimaces);
-    }
+
 }

@@ -5,8 +5,13 @@ import com.grimacegram.grimacegram.model.User;
 import com.grimacegram.grimacegram.repository.GrimaceRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import java.util.Date;
 import java.util.List;
 
@@ -36,30 +41,44 @@ public class GrimaceService {
         return grimaceRepository.findByUser(inDB, pageable);
     }
 
-    public Page<Grimace> getOldGrimaces(long id, Pageable pageable) {
-        return grimaceRepository.findByIdLessThan(id, pageable);
+    public Page<Grimace> getOldGrimaces(long id, String username, Pageable pageable) {
+        Specification<Grimace> spec = Specification.where(idLessThan(id));
+        if(username != null) {
+            User inDB = userService.getByUsername(username);
+            spec = spec.and(userIs(inDB));
+        }
+
+        return grimaceRepository.findAll(spec, pageable);
+
     }
 
-    public Page<Grimace> getOldGrimacesOfUser(long id, String username, Pageable pageable) {
-        User inDB = userService.getByUsername(username);
-        return grimaceRepository.findByIdLessThanAndUser(id, inDB, pageable);
+
+    public List<Grimace> getNewGrimace(long id, String username, Pageable pageable) {
+        Specification<Grimace> spec = Specification.where(idGreaterThan(id));
+        if(username != null) {
+            User inDB = userService.getByUsername(username);
+            spec = spec.and(userIs(inDB));
+        }
+        return grimaceRepository.findAll(spec, pageable.getSort());
     }
 
-    public List<Grimace> getNewGrimace(long id, Pageable pageable) {
-        return grimaceRepository.findByIdGreaterThan(id, pageable.getSort());
+
+    public long getNewGrimacesCount(long id, String username) {
+        Specification<Grimace> spec = Specification.where(idGreaterThan(id));
+        if(username != null) {
+            User inDB = userService.getByUsername(username);
+            spec = spec.and(userIs(inDB));
+        }
+        return grimaceRepository.count(spec);
     }
 
-    public List<Grimace> getNewGrimaceOfUser(long id, String username, Pageable pageable) {
-        User inDB = userService.getByUsername(username);
-        return grimaceRepository.findByIdGreaterThanAndUser(id, inDB, pageable.getSort());
+    private Specification<Grimace> userIs(User user) {
+        return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("user"), user);
     }
-
-    public long getNewGrimacesCount(long id) {
-        return grimaceRepository.countByIdGreaterThan(id);
+    private Specification<Grimace> idLessThan(long id){
+        return (root, query, criteriaBuilder) -> criteriaBuilder.lessThan(root.get("id"), id);
     }
-
-    public long getNewGrimacesCountOfUser(long id, String username) {
-        User inDB = userService.getByUsername(username);
-        return grimaceRepository.countByIdGreaterThanAndUser(id, inDB);
+    private Specification<Grimace> idGreaterThan(long id){
+        return (root, query, criteriaBuilder) -> criteriaBuilder.greaterThan(root.get("id"), id);
     }
 }
