@@ -1,13 +1,18 @@
 package com.grimacegram.grimacegram;
 
+import com.grimacegram.grimacegram.configuration.AppConfiguration;
 import com.grimacegram.grimacegram.error.ApiError;
 import com.grimacegram.grimacegram.grimace.Grimace;
 import com.grimacegram.grimacegram.model.User;
+import com.grimacegram.grimacegram.repository.FileAttachmentRepository;
 import com.grimacegram.grimacegram.repository.GrimaceRepository;
 import com.grimacegram.grimacegram.repository.UserRepository;
+import com.grimacegram.grimacegram.services.FileService;
 import com.grimacegram.grimacegram.services.GrimaceService;
 import com.grimacegram.grimacegram.services.UserService;
+import com.grimacegram.grimacegram.shared.FileAttachment;
 import com.grimacegram.grimacegram.vm.GrimaceVM;
+import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,18 +20,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.support.BasicAuthenticationInterceptor;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.context.transaction.TestTransaction;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceUnit;
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -49,16 +57,23 @@ public class GrimaceControllerTest {
     GrimaceRepository grimaceRepository;
     @Autowired
     GrimaceService grimaceService;
+    @Autowired
+    FileAttachmentRepository fileAttachmentRepository;
+    @Autowired
+    FileService fileService;
+    @Autowired
+    AppConfiguration appConfiguration;
 
     @PersistenceUnit
     private EntityManagerFactory entityManagerFactory;
 
     @Before
-    public void cleanup() {
+    public void cleanup() throws IOException {
+        fileAttachmentRepository.deleteAll();
         grimaceRepository.deleteAll();
         userRepository.deleteAll();
-
         testRestTemplate.getRestTemplate().getInterceptors().clear();
+        FileUtils.cleanDirectory(new File(appConfiguration.getFullAttachmentsPath()));
     }
 
     private void authenticate(String username){
@@ -255,6 +270,55 @@ public class GrimaceControllerTest {
         ResponseEntity<GrimaceVM> response = postGrimace(grimace, GrimaceVM.class);
         assertThat(response.getBody().getUser().getUsername()).isEqualTo("user1");
     }
+    @Test
+    public void postGrimace_whenGrimaceHasFileAttachmentAndUserIsAuthorized_fileAttachmentGrimaceRelationIsUpdatedInDatabase() throws IOException {
+        userService.save(TestUtil.createValidUser("user1"));
+        authenticate("user1");
+
+        MultipartFile file = createFile();
+
+        FileAttachment savedFile = fileService.saveAttachment(file);
+
+        Grimace grimace = TestUtil.createValidGrimace();
+        grimace.setAttachment(savedFile);
+        ResponseEntity<GrimaceVM> response = postGrimace(grimace, GrimaceVM.class);
+
+        FileAttachment inDB = fileAttachmentRepository.findAll().get(0);
+        assertThat(inDB.getGrimace().getId()).isEqualTo(response.getBody().getId());
+    }
+    @Test
+    public void postGrimace_whenGrimaceHasFileAttachmentAndUserIsAuthorized_grimaceFileAttachmentRelationIsUpdatedInDatabase() throws IOException {
+        userService.save(TestUtil.createValidUser("user1"));
+        authenticate("user1");
+
+        MultipartFile file = createFile();
+
+        FileAttachment savedFile = fileService.saveAttachment(file);
+
+        Grimace grimace = TestUtil.createValidGrimace();
+        grimace.setAttachment(savedFile);
+        ResponseEntity<GrimaceVM> response = postGrimace(grimace, GrimaceVM.class);
+
+        Grimace inDB = grimaceRepository.findById(response.getBody().getId()).get();
+        assertThat(inDB.getAttachment().getId()).isEqualTo(savedFile.getId());
+    }
+    @Test
+    public void postGrimace_whenGrimaceHasFileAttachmentAndUserIsAuthorized_receiveGrimaceVMWithAttachment() throws IOException {
+        userService.save(TestUtil.createValidUser("user1"));
+        authenticate("user1");
+
+        MultipartFile file = createFile();
+
+        FileAttachment savedFile = fileService.saveAttachment(file);
+
+        Grimace grimace = TestUtil.createValidGrimace();
+        grimace.setAttachment(savedFile);
+        ResponseEntity<GrimaceVM> response = postGrimace(grimace, GrimaceVM.class);
+
+        FileAttachment inDB = fileAttachmentRepository.findAll().get(0);
+        assertThat(response.getBody().getAttachment().getName()).isEqualTo(savedFile.getName());
+    }
+
     @Test
     public void getGrimacesOfUser_whenUserExists_receiveOk(){
         userService.save(TestUtil.createValidUser("user1"));
@@ -502,5 +566,12 @@ public class GrimaceControllerTest {
         ResponseEntity<Map<String, Long>> response = getNewGrimaceCountOfUser(fourth.getId(), "user1", new ParameterizedTypeReference<Map<String, Long>>() {
         });
         assertThat(response.getBody().get("count")).isEqualTo(1);
+    }
+    private MultipartFile createFile() throws IOException {
+        ClassPathResource imageResource = new ClassPathResource("profile.jpeg");
+        byte[] fileAsByte = FileUtils.readFileToByteArray(imageResource.getFile());
+
+        MultipartFile file = new MockMultipartFile("profile.jpeg", fileAsByte);
+        return file;
     }
 }

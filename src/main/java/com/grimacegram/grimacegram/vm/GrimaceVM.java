@@ -16,10 +16,15 @@ public class GrimaceVM {
 
     private UserVM user;
 
+    private FileAttachmentVM attachment;
+
     public GrimaceVM(Grimace grimace) {
         this.setId(grimace.getId());
         this.setContent(grimace.getContent());
         this.setDate(grimace.getTimestamp().getTime());
         this.setUser(new UserVM(grimace.getUser()));
+        if (grimace.getAttachment() != null) {
+            this.setAttachment(new FileAttachmentVM(grimace.getAttachment()));
+        }
     }
 }
