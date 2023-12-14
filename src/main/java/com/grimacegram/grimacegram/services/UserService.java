@@ -1,19 +1,16 @@
 package com.grimacegram.grimacegram.services;
 
 import com.grimacegram.grimacegram.error.NotFoundException;
-import com.grimacegram.grimacegram.file.FileService;
 import com.grimacegram.grimacegram.model.User;
 import com.grimacegram.grimacegram.repository.UserRepository;
 import com.grimacegram.grimacegram.vm.UserUpdateVM;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.UUID;
 
 @Service
 public class UserService {

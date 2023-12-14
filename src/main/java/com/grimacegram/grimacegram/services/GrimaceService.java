@@ -2,7 +2,9 @@ package com.grimacegram.grimacegram.services;
 
 import com.grimacegram.grimacegram.grimace.Grimace;
 import com.grimacegram.grimacegram.model.User;
+import com.grimacegram.grimacegram.repository.FileAttachmentRepository;
 import com.grimacegram.grimacegram.repository.GrimaceRepository;
+import com.grimacegram.grimacegram.shared.FileAttachment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -20,15 +22,22 @@ public class GrimaceService {
 
     GrimaceRepository grimaceRepository;
     UserService userService;
-    public GrimaceService (GrimaceRepository grimaceRepository, UserService userService){
+    FileAttachmentRepository fileAttachmentRepository;
+    public GrimaceService (GrimaceRepository grimaceRepository, UserService userService, FileAttachmentRepository fileAttachmentRepository){
         super();
         this.grimaceRepository = grimaceRepository;
         this.userService = userService;
+        this.fileAttachmentRepository = fileAttachmentRepository;
     }
 
     public Grimace save(User user, Grimace grimace) {
         grimace.setTimestamp(new Date());
         grimace.setUser(user);
+        if(grimace.getAttachment() != null) {
+            FileAttachment inDB = fileAttachmentRepository.findById(grimace.getAttachment().getId()).get();
+            inDB.setGrimace(grimace);
+            grimace.setAttachment(inDB);
+        }
         return grimaceRepository.save(grimace);
     }
 

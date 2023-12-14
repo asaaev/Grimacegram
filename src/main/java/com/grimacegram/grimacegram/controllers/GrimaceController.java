@@ -39,9 +39,9 @@ public class GrimaceController {
 
     @GetMapping({"/grimace/{id:[0-9]+}", "/users/{username}/grimace/{id:[0-9]+}"})
     ResponseEntity<?> getGrimaceRelative(@PathVariable long id,
-        @PathVariable(required = false) String username,
-        Pageable pageable,
-@RequestParam(name = "direction", defaultValue = "after") String direction,
+                                         @PathVariable(required = false) String username,
+                                         Pageable pageable,
+                                         @RequestParam(name = "direction", defaultValue = "after") String direction,
                                          @RequestParam(name = "count", defaultValue = "false", required = false) boolean count){
         if (!direction.equalsIgnoreCase("after")) {
             return ResponseEntity.ok(grimaceService.getOldGrimaces(id, username, pageable).map(GrimaceVM::new));

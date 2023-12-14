@@ -2,6 +2,7 @@ package com.grimacegram.grimacegram.grimace;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.grimacegram.grimacegram.model.User;
+import com.grimacegram.grimacegram.shared.FileAttachment;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -24,9 +25,9 @@ public class Grimace {
     @Temporal(TemporalType.TIMESTAMP)
     private Date timestamp;
 
-
-
-
     @ManyToOne
     private User user;
+
+    @OneToOne(mappedBy = "grimace")
+    private FileAttachment attachment;
 }
