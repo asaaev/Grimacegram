@@ -90,4 +90,8 @@ public class GrimaceService {
     private Specification<Grimace> idGreaterThan(long id){
         return (root, query, criteriaBuilder) -> criteriaBuilder.greaterThan(root.get("id"), id);
     }
+
+    public void deleteGrimace(long id) {
+        grimaceRepository.deleteById(id);
+    }
 }

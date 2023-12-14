@@ -4,6 +4,7 @@ import com.grimacegram.grimacegram.grimace.Grimace;
 import com.grimacegram.grimacegram.model.User;
 import com.grimacegram.grimacegram.services.GrimaceService;
 import com.grimacegram.grimacegram.shared.CurrentUser;
+import com.grimacegram.grimacegram.shared.GenericResponse;
 import com.grimacegram.grimacegram.vm.GrimaceVM;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -52,6 +53,11 @@ public class GrimaceController {
         }
         List<GrimaceVM> newGrimace = grimaceService.getNewGrimace(id, username, pageable).stream().map(GrimaceVM::new).collect(Collectors.toList());
         return ResponseEntity.ok(newGrimace);
+    }
+    @DeleteMapping("/grimace/{id:[0-9]+}")
+    GenericResponse deleteGrimace(@PathVariable long id){
+        grimaceService.deleteGrimace(id);
+        return new GenericResponse("Grimace is removed");
     }
 
 }
