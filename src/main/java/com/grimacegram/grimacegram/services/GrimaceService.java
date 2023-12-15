@@ -23,11 +23,15 @@ public class GrimaceService {
     GrimaceRepository grimaceRepository;
     UserService userService;
     FileAttachmentRepository fileAttachmentRepository;
-    public GrimaceService (GrimaceRepository grimaceRepository, UserService userService, FileAttachmentRepository fileAttachmentRepository){
+
+    FileService fileService;
+    public GrimaceService (GrimaceRepository grimaceRepository, UserService userService, FileAttachmentRepository fileAttachmentRepository,
+                           FileService fileService){
         super();
         this.grimaceRepository = grimaceRepository;
         this.userService = userService;
         this.fileAttachmentRepository = fileAttachmentRepository;
+        this.fileService = fileService;
     }
 
     public Grimace save(User user, Grimace grimace) {
@@ -89,5 +93,13 @@ public class GrimaceService {
     }
     private Specification<Grimace> idGreaterThan(long id){
         return (root, query, criteriaBuilder) -> criteriaBuilder.greaterThan(root.get("id"), id);
+    }
+
+    public void deleteGrimace(long id) {
+        Grimace grimace = grimaceRepository.getOne(id);
+        if(grimace.getAttachment() != null) {
+            fileService.deleteAttachmentImage(grimace.getAttachment().getName());
+        }
+        grimaceRepository.deleteById(id);
     }
 }

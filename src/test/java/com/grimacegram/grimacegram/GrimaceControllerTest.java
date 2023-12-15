@@ -11,6 +11,7 @@ import com.grimacegram.grimacegram.services.FileService;
 import com.grimacegram.grimacegram.services.GrimaceService;
 import com.grimacegram.grimacegram.services.UserService;
 import com.grimacegram.grimacegram.shared.FileAttachment;
+import com.grimacegram.grimacegram.shared.GenericResponse;
 import com.grimacegram.grimacegram.vm.GrimaceVM;
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
@@ -37,6 +38,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -116,6 +118,9 @@ public class GrimaceControllerTest {
     public <T> ResponseEntity <T> getNewGrimaceCountOfUser(long grimaceId, String username, ParameterizedTypeReference<T> responseType){
         String path = "/api/1.0/users/" + username + "/grimace" + "/" + grimaceId + "?direction=after&count=true";
         return testRestTemplate.exchange(path, HttpMethod.GET,null, responseType);
+    }
+    public <T> ResponseEntity <T> deleteGrimece(long grimaceId, Class<T> responseType){
+        return testRestTemplate.exchange(API_1_0_GRIMACES + "/" + grimaceId, HttpMethod.DELETE, null, responseType);
     }
     @Test
     public void postGrimace_whenGrimaceIsValidAndUserIsAuthorized_receiveOk() {
@@ -567,6 +572,100 @@ public class GrimaceControllerTest {
         });
         assertThat(response.getBody().get("count")).isEqualTo(1);
     }
+    @Test
+    public void deleteGrimace_whenUserIsAnAuthorized_receiveUnauthorized(){
+        ResponseEntity<Object> response = deleteGrimece(555, Object.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+    @Test
+    public void  deleteGrimace_whenUserIsAuthorized_receiveOk(){
+        User user = userService.save(TestUtil.createValidUser("user1"));
+        authenticate("user1");
+        Grimace grimace = grimaceService.save(user, TestUtil.createValidGrimace());
+
+        ResponseEntity<Object> response = deleteGrimece(grimace.getId(), Object.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+    @Test
+    public void  deleteGrimace_whenUserIsAuthorized_receiveGenericResponse(){
+        User user = userService.save(TestUtil.createValidUser("user1"));
+        authenticate("user1");
+        Grimace grimace = grimaceService.save(user, TestUtil.createValidGrimace());
+
+        ResponseEntity<GenericResponse> response = deleteGrimece(grimace.getId(), GenericResponse.class);
+        assertThat(response.getBody().getMessage()).isNotNull();
+    }
+    @Test
+    public void  deleteGrimace_whenUserIsAuthorized_grimaceRemovedFromDatabase() {
+        User user = userService.save(TestUtil.createValidUser("user1"));
+        authenticate("user1");
+        Grimace grimace = grimaceService.save(user, TestUtil.createValidGrimace());
+
+        deleteGrimece(grimace.getId(), Object.class);
+        Optional<Grimace> inDB = grimaceRepository.findById(grimace.getId());
+        assertThat(inDB.isPresent()).isFalse();
+    }
+    @Test
+    public void  deleteGrimace_whenUserIsOwnedByAnotherUser_receiveForbidden() {
+        userService.save(TestUtil.createValidUser("user1"));
+        authenticate("user1");
+        User grimaceOwner = userService.save(TestUtil.createValidUser("grimace-owner"));
+        Grimace grimace = grimaceService.save(grimaceOwner, TestUtil.createValidGrimace());
+
+        ResponseEntity<Object> response = deleteGrimece(grimace.getId(), Object.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+    @Test
+    public void  deleteGrimace_whenUserNotExist_receiveForbidden() {
+        userService.save(TestUtil.createValidUser("user1"));
+        authenticate("user1");
+
+        ResponseEntity<Object> response = deleteGrimece(5555, Object.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+    @Test
+    public void geleteGrimace_whenGrimaceHasAttachment_attachmentRemovedFromDatabase() throws IOException {
+        userService.save(TestUtil.createValidUser("user1"));
+        authenticate("user1");
+
+        MultipartFile file = createFile();
+
+        FileAttachment savedFile = fileService.saveAttachment(file);
+
+        Grimace grimace = TestUtil.createValidGrimace();
+        grimace.setAttachment(savedFile);
+        ResponseEntity<GrimaceVM> response = postGrimace(grimace, GrimaceVM.class);
+
+        long grimaceId = response.getBody().getId();
+        deleteGrimece(grimaceId, Object.class);
+
+        Optional<FileAttachment> optionalFileAttachment = fileAttachmentRepository.findById(savedFile.getId());
+        assertThat(optionalFileAttachment.isPresent()).isFalse();
+    }
+
+    @Test
+    public void geleteGrimace_whenGrimaceHasAttachment_attachmentRemovedFromStorage() throws IOException {
+        userService.save(TestUtil.createValidUser("user1"));
+        authenticate("user1");
+
+        MultipartFile file = createFile();
+
+        FileAttachment savedFile = fileService.saveAttachment(file);
+
+        Grimace grimace = TestUtil.createValidGrimace();
+        grimace.setAttachment(savedFile);
+        ResponseEntity<GrimaceVM> response = postGrimace(grimace, GrimaceVM.class);
+
+        long grimaceId = response.getBody().getId();
+        deleteGrimece(grimaceId, Object.class);
+
+        String attachmentFolderPath = appConfiguration.getFullAttachmentsPath() + "/" + savedFile.getName();
+        File storedImage = new File(attachmentFolderPath);
+        assertThat(storedImage.exists()).isFalse();
+
+    }
+
+
     private MultipartFile createFile() throws IOException {
         ClassPathResource imageResource = new ClassPathResource("profile.jpeg");
         byte[] fileAsByte = FileUtils.readFileToByteArray(imageResource.getFile());
