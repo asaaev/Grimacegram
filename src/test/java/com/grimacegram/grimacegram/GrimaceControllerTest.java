@@ -605,6 +605,66 @@ public class GrimaceControllerTest {
         Optional<Grimace> inDB = grimaceRepository.findById(grimace.getId());
         assertThat(inDB.isPresent()).isFalse();
     }
+    @Test
+    public void  deleteGrimace_whenUserIsOwnedByAnotherUser_receiveForbidden() {
+        userService.save(TestUtil.createValidUser("user1"));
+        authenticate("user1");
+        User grimaceOwner = userService.save(TestUtil.createValidUser("grimace-owner"));
+        Grimace grimace = grimaceService.save(grimaceOwner, TestUtil.createValidGrimace());
+
+        ResponseEntity<Object> response = deleteGrimece(grimace.getId(), Object.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+    @Test
+    public void  deleteGrimace_whenUserNotExist_receiveForbidden() {
+        userService.save(TestUtil.createValidUser("user1"));
+        authenticate("user1");
+
+        ResponseEntity<Object> response = deleteGrimece(5555, Object.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+    @Test
+    public void geleteGrimace_whenGrimaceHasAttachment_attachmentRemovedFromDatabase() throws IOException {
+        userService.save(TestUtil.createValidUser("user1"));
+        authenticate("user1");
+
+        MultipartFile file = createFile();
+
+        FileAttachment savedFile = fileService.saveAttachment(file);
+
+        Grimace grimace = TestUtil.createValidGrimace();
+        grimace.setAttachment(savedFile);
+        ResponseEntity<GrimaceVM> response = postGrimace(grimace, GrimaceVM.class);
+
+        long grimaceId = response.getBody().getId();
+        deleteGrimece(grimaceId, Object.class);
+
+        Optional<FileAttachment> optionalFileAttachment = fileAttachmentRepository.findById(savedFile.getId());
+        assertThat(optionalFileAttachment.isPresent()).isFalse();
+    }
+
+    @Test
+    public void geleteGrimace_whenGrimaceHasAttachment_attachmentRemovedFromStorage() throws IOException {
+        userService.save(TestUtil.createValidUser("user1"));
+        authenticate("user1");
+
+        MultipartFile file = createFile();
+
+        FileAttachment savedFile = fileService.saveAttachment(file);
+
+        Grimace grimace = TestUtil.createValidGrimace();
+        grimace.setAttachment(savedFile);
+        ResponseEntity<GrimaceVM> response = postGrimace(grimace, GrimaceVM.class);
+
+        long grimaceId = response.getBody().getId();
+        deleteGrimece(grimaceId, Object.class);
+
+        String attachmentFolderPath = appConfiguration.getFullAttachmentsPath() + "/" + savedFile.getName();
+        File storedImage = new File(attachmentFolderPath);
+        assertThat(storedImage.exists()).isFalse();
+
+    }
+
 
     private MultipartFile createFile() throws IOException {
         ClassPathResource imageResource = new ClassPathResource("profile.jpeg");

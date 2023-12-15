@@ -28,6 +28,6 @@ public class Grimace {
     @ManyToOne
     private User user;
 
-    @OneToOne(mappedBy = "grimace")
+    @OneToOne(mappedBy = "grimace", orphanRemoval = true)
     private FileAttachment attachment;
 }

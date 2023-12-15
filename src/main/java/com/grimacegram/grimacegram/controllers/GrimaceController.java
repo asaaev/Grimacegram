@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -55,6 +56,7 @@ public class GrimaceController {
         return ResponseEntity.ok(newGrimace);
     }
     @DeleteMapping("/grimace/{id:[0-9]+}")
+    @PreAuthorize("@grimaceSecurityService.isAllowedToDelete(#id, principal)")
     GenericResponse deleteGrimace(@PathVariable long id){
         grimaceService.deleteGrimace(id);
         return new GenericResponse("Grimace is removed");
